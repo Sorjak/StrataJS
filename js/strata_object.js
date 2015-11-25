@@ -1,13 +1,17 @@
 
-define(function() {
+define(['js/lib/vector2.js'], function(Vector2) {
     "use strict";
 
-    function StrataObject(position, path) {
-        this.initSprite(position, path);
+    function StrataObject(id, position, path, scale, anchor) {
+        this.id = id;
 
-        this.position = this.sprite.position;
+        this.initSprite(position, path, scale, anchor);
+
+        this.position = new Vector2(this.sprite.position.x, this.sprite.position.y);
         this.rotation = this.sprite.rotation;
-        this.speed = new PIXI.Point(0, 0);
+        this.velocity = new Vector2(0, 0);
+
+        this.speedMultiplier = 1;
 
         var myObj = this;
 
@@ -19,13 +23,13 @@ define(function() {
         });
     };
 
-    StrataObject.prototype.initSprite = function(pos, path) {
+    StrataObject.prototype.initSprite = function(pos, path, scale, anchor) {
         this.sprite = new PIXI.Sprite.fromImage(path);
 
-        this.sprite.anchor = new PIXI.Point(.5, .5);
         this.sprite.position = pos;
-        this.sprite.scale.x = .1;
-        this.sprite.scale.y = .1;
+
+        this.sprite.scale = typeof scale !== 'undefined' ? scale : new PIXI.Point(.1, .1);
+        this.sprite.anchor = typeof anchor !== 'undefined' ? anchor : new PIXI.Point(.5, .5);
 
         this.sprite.interactive = true;
 
@@ -36,9 +40,9 @@ define(function() {
 
     }
 
-    StrataObject.prototype.update = function() {
-        this.position.x += this.speed.x;
-        this.position.y += this.speed.y;
+    StrataObject.prototype.update = function(deltaTime) {
+        var tempVelocity = this.velocity.clone().multiplyScalar(deltaTime * this.speedMultiplier);
+        this.position.add(tempVelocity);
 
         if (this.position.x > RENDERER.width)
             this.position.x = 0;
@@ -50,12 +54,25 @@ define(function() {
         if (this.position.y < 0)
             this.position.y = RENDERER.height;
 
-        this.sprite.position = this.position
+        this.sprite.position.x = this.position.x;
+        this.sprite.position.y = this.position.y;
         this.sprite.rotation = this.rotation;
     }
 
     StrataObject.prototype.onDown = function() {
+        this._log("id: " + this.id 
+            + " | pos: (" + 
+            Math.floor(this.position.x) + "," + Math.floor(this.position.y) 
+            + ") | vel: (" +
+            this.velocity.x + "," + this.velocity.y
+            + ")"
+        );
+    }
 
+    StrataObject.prototype._log = function(message) {
+        var textarea = document.getElementById("console-text");
+        textarea.textContent += message + "\n";
+        textarea.scrollTop = textarea.scrollHeight;
     }
 
 
