@@ -1,8 +1,20 @@
 .container {
+    width: 100%;
+    display:block;
+    float:left;
     margin-bottom: 20px;
 }
 
 #console textarea {
     width: 790px;
     height: 200px;
+}
+
+#info p {
+    display:block;
+    float:left;
+}
+
+#info #fps {
+    margin-left: 670px;
 }

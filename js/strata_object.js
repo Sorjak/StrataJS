@@ -1,15 +1,19 @@
-
 define(['js/lib/vector2.js'], function(Vector2) {
     "use strict";
 
-    function StrataObject(id, position, path, scale, anchor) {
+    function StrataObject(id, tile, path, scale, anchor) {
         this.id = id;
+        this.tags = [];
 
-        this.initSprite(position, path, scale, anchor);
+        this.initSprite(new PIXI.Point(tile.position.x, tile.position.y), path, scale, anchor);
 
-        this.position = new Vector2(this.sprite.position.x, this.sprite.position.y);
+        
         this.rotation = this.sprite.rotation;
-        this.velocity = new Vector2(0, 0);
+        
+        this.currentTile = tile;
+        this.movePath = null;
+        this.moveIndex = 0;
+        this.targetTile = null;
 
         this.speedMultiplier = 1;
 
@@ -21,6 +25,7 @@ define(['js/lib/vector2.js'], function(Vector2) {
         this.sprite.on('touchstart', function() {
             myObj.onDown();
         });
+        
     };
 
     StrataObject.prototype.initSprite = function(pos, path, scale, anchor) {
@@ -29,42 +34,57 @@ define(['js/lib/vector2.js'], function(Vector2) {
         this.sprite.position = pos;
 
         this.sprite.scale = typeof scale !== 'undefined' ? scale : new PIXI.Point(.1, .1);
-        this.sprite.anchor = typeof anchor !== 'undefined' ? anchor : new PIXI.Point(.5, .5);
+        this.sprite.anchor = typeof anchor !== 'undefined' ? anchor : new PIXI.Point(0, 0);
 
         this.sprite.interactive = true;
 
-        STAGE.addChild(this.sprite);
+        ENTITY_CONTAINER.addChild(this.sprite);
     }
 
     StrataObject.prototype.draw = function() {
 
     }
-
+    
     StrataObject.prototype.update = function(deltaTime) {
-        var tempVelocity = this.velocity.clone().multiplyScalar(deltaTime * this.speedMultiplier);
-        this.position.add(tempVelocity);
-
-        if (this.position.x > RENDERER.width)
-            this.position.x = 0;
-        if (this.position.x < 0)
-            this.position.x = RENDERER.width;
-
-        if (this.position.y > RENDERER.height)
-            this.position.y = 0;
-        if (this.position.y < 0)
-            this.position.y = RENDERER.height;
-
-        this.sprite.position.x = this.position.x;
-        this.sprite.position.y = this.position.y;
-        this.sprite.rotation = this.rotation;
+        
+        if (this.targetTile != null && this.movePath == null) {
+            this.movePath = game.astar.search(this.currentTile, this.targetTile);
+            this.moveIndex = 0;
+            this.moveFrame = 0;
+            
+        } else if (this.targetTile != null && this.movePath != null) {
+            
+            if (this.currentTile != this.targetTile) {
+                
+                if (this.moveFrame < this.speedMultiplier) {
+                    this.moveFrame += deltaTime;
+                    
+                } else {
+                    var nextTile = this.movePath[this.moveIndex];
+                    // nextTile.highlight();
+                    this.moveToTile(nextTile);
+                }
+            } else {
+                this.movePath = null;
+                this.targetTile = null;
+            }
+        }
+        
+        this.sprite.position.x = this.currentTile.position.x; 
+        this.sprite.position.y = this.currentTile.position.y;
+    }
+    
+    StrataObject.prototype.moveToTile = function(tile) {
+        // potentially make this a tween.
+        this.currentTile = tile;
+        this.moveFrame = 0;
+        this.moveIndex++;
     }
 
     StrataObject.prototype.onDown = function() {
         this._log("id: " + this.id 
-            + " | pos: (" + 
-            Math.floor(this.position.x) + "," + Math.floor(this.position.y) 
-            + ") | vel: (" +
-            this.velocity.x + "," + this.velocity.y
+            + " | index: (" + 
+            Math.floor(this.currentTile.index.x) + "," + Math.floor(this.currentTile.index.y) 
             + ")"
         );
     }
