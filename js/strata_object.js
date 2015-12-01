@@ -3,11 +3,12 @@ define(['js/lib/vector2.js'], function(Vector2) {
 
     function StrataObject(id, tile, path, scale, anchor) {
         this.id = id;
-        this.tags = [];
+        this.tags = new Set();
 
         this.initSprite(new PIXI.Point(tile.position.x, tile.position.y), path, scale, anchor);
         this.rotation = this.sprite.rotation;
         this.currentTile = tile;
+        this.currentTile.enter(this);
 
         var myObj = this;
 
@@ -38,9 +39,7 @@ define(['js/lib/vector2.js'], function(Vector2) {
     }
     
     StrataObject.prototype.update = function(deltaTime) {
-        
-        // this.sprite.position.x = this.currentTile.position.x; 
-        // this.sprite.position.y = this.currentTile.position.y;
+
     }
     
 
@@ -52,6 +51,24 @@ define(['js/lib/vector2.js'], function(Vector2) {
             + ")"
         );
     }
+
+    StrataObject.prototype.moveToTile = function(tile) {
+        this.currentTile.exit(this);
+        tile.enter(this);
+
+        this.currentTile = tile;
+
+        this.sprite.position.x = this.currentTile.position.x; 
+        this.sprite.position.y = this.currentTile.position.y;
+    }
+
+    StrataObject.prototype.die = function() {
+        game.entities.delete(this);
+        ENTITY_CONTAINER.removeChild(this.sprite);
+
+        this.currentTile.exit(this);
+    }
+
 
     StrataObject.prototype._log = function(message) {
         var textarea = document.getElementById("console-text");

@@ -7,7 +7,7 @@ define(['js/strata_object.js'], function(StrataObject) {
         this.sprite.width = TILE_SIZE;
         this.sprite.height = TILE_SIZE;
         
-        this.tags = ["plant"];
+        this.tags.add("plant");
         
         this.health = 100;
         this.growth = 0;
@@ -19,7 +19,7 @@ define(['js/strata_object.js'], function(StrataObject) {
     // OVERRIDES
 
     Flower.prototype.update = function(deltaTime) {
-        this.grow(deltaTime);
+        //this.grow(deltaTime);
 
         StrataObject.prototype.update.call(this, deltaTime);
     };
@@ -31,7 +31,7 @@ define(['js/strata_object.js'], function(StrataObject) {
     };
 
     Flower.prototype.onDown = function() {
-        game.pickFlower(this.currentTile);
+        // game.pickFlower(this.currentTile);
 
         StrataObject.prototype.onDown.call(this);
     };
@@ -52,6 +52,14 @@ define(['js/strata_object.js'], function(StrataObject) {
     };
     
     // PUBLIC METHODS
+
+    Flower.prototype.getEaten = function(amount) {
+        this.health -= amount;
+
+        if (this.health < 0) {
+            this.die();
+        }
+    }
 
     return Flower;
 });

@@ -10,6 +10,8 @@ define(function() {
         this.weight = ran > .3 ? 1 : 0;
         
         this.graphics = new PIXI.Graphics();
+
+        this.occupants = new Set();
         
         this.initSprite();
     };
@@ -28,6 +30,25 @@ define(function() {
         
         TILES_CONTAINER.addChild(this.sprite);
     };
+
+    Tile.prototype.enter = function(entity) {
+        this.occupants.add(entity);
+    };
+
+    Tile.prototype.exit = function(entity) {
+        this.occupants.delete(entity);
+    };
+
+    Tile.prototype.getOccupantsWithTag = function(tag) {
+        output = [];
+        this.occupants.forEach(function(entity) {
+            if (entity.tags.has(tag))
+                output.push(entity);
+        });
+
+
+        return output;
+    }
     
     Tile.prototype.highlight = function() {
         this.graphics.lineStyle(1, 0xFF0000, 1);
@@ -35,6 +56,12 @@ define(function() {
         this.graphics.drawRect(this.position.x , this.position.y, TILE_SIZE, TILE_SIZE);
 
         TILES_CONTAINER.addChild(this.graphics);
+    };
+
+    Tile.prototype.distanceTo = function(other) {
+        var dx = this.index.x - other.index.x; 
+        var dy = this.index.y - other.index.y;
+        return Math.sqrt(dx * dx + dy * dy);
     };
 
     return Tile;

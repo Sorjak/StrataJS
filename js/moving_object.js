@@ -53,6 +53,15 @@ define(['js/strata_object.js'], function(StrataObject) {
         StrataObject.prototype.onDown.call(this);
     };
 
+    MovingObject.prototype.moveToTile = function(tile) {
+        // potentially make this a tween.
+        
+        this.moveFrame = 0;
+        this.moveIndex++;
+
+        StrataObject.prototype.moveToTile.call(this, tile);
+    }
+
 
     // PUBLIC METHODS
 
@@ -62,15 +71,7 @@ define(['js/strata_object.js'], function(StrataObject) {
         this.movePath = game.astar.search(this.currentTile, tile);
     };
 
-    MovingObject.prototype.moveToTile = function(tile) {
-        // potentially make this a tween.
-        this.currentTile = tile;
-        this.moveFrame = 0;
-        this.moveIndex++;
 
-        this.sprite.position.x = this.currentTile.position.x; 
-        this.sprite.position.y = this.currentTile.position.y;
-    }
 
     // PRIVATE METHODS 
 
