@@ -15,15 +15,16 @@ define(function() {
     };
 
     Tile.prototype.initSprite = function() {
-        this.sprite = new PIXI.Sprite.fromImage("resources/grass.jpg");
+        if (this.weight == 1){
+            this.sprite = new PIXI.Sprite.fromImage("resources/grass.jpg");
+        } else {
+            this.sprite = new PIXI.Sprite.fromImage("resources/mountain.png");
+        }
         this.sprite.height = TILE_SIZE; 
         this.sprite.width = TILE_SIZE;
         
         this.sprite.position.x = this.position.x;
         this.sprite.position.y = this.position.y;
-        
-        if (this.weight === 0)
-            this.sprite.visible = false;
         
         TILES_CONTAINER.addChild(this.sprite);
     };

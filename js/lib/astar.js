@@ -14,9 +14,6 @@ define(['js/lib/binary_heap.js'], function(BinaryHeap) {
         
         f_score = this.infinityMap();
         f_score.set(start.index, g_score.get(start.index) + start.position.distanceTo(end.position));
-        
-        console.log("f score");
-        console.log(f_score);
 
         openHeap = new BinaryHeap(function(e) {
             return f_score.get(e.index); 
@@ -41,9 +38,7 @@ define(['js/lib/binary_heap.js'], function(BinaryHeap) {
                 if (neighbor.weight > 0 && !closedSet.has(neighbor)) {
                     potential_g = g_score.get(currentNode.index) + (currentNode.weight - neighbor.weight);
                     
-                    if (!openHeap.has(neighbor)) {
-                        openHeap.push(neighbor);
-                    } else if (potential_g >= g_score.get(neighbor.index)) {
+                    if (potential_g >= g_score.get(neighbor.index)) {
                         return;
                     }
                     
@@ -51,6 +46,9 @@ define(['js/lib/binary_heap.js'], function(BinaryHeap) {
                     g_score.set(neighbor.index, potential_g);
                     f_score.set(neighbor.index, g_score.get(neighbor.index) + neighbor.position.distanceTo(end.position));
                     
+                    if (!openHeap.has(neighbor)) {
+                        openHeap.push(neighbor);
+                    }
                 }
             });
             
