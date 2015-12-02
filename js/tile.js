@@ -49,6 +49,19 @@ define(function() {
 
         return output;
     }
+
+    Tile.prototype.hasOccupantWithTag = function(tag) {
+        output = false;
+        this.occupants.forEach(function(entity) {
+            if (entity.tags.has(tag))
+                output = true;
+        });
+
+
+        return output;
+    }
+
+
     
     Tile.prototype.highlight = function() {
         this.graphics.lineStyle(1, 0xFF0000, 1);
@@ -63,6 +76,58 @@ define(function() {
         var dy = this.index.y - other.index.y;
         return Math.sqrt(dx * dx + dy * dy);
     };
+
+
+    Tile.prototype.getNeighbors = function(diagonal) {
+        var x = this.index.x;
+        var y = this.index.y;
+        var output = [];
+        
+        //west
+        if (game.tiles[x-1] && game.tiles[x-1][y]) {
+            output.push(game.tiles[x-1][y]);
+        }
+        
+        //north
+        if (game.tiles[x] && game.tiles[x][y-1]) {
+            output.push(game.tiles[x][y-1]);
+        }
+        
+        //east
+        if (game.tiles[x+1] && game.tiles[x+1][y]) {
+            output.push(game.tiles[x+1][y]);
+        }
+        
+        //south
+        if (game.tiles[x] && game.tiles[x][y+1]) {
+            output.push(game.tiles[x][y+1]);
+        }
+        
+
+        if (diagonal) {
+            //northwest
+            if (game.tiles[x-1] && game.tiles[x-1][y-1]) {
+                output.push(game.tiles[x-1][y-1]);
+            }
+            
+            //northeast
+            if (game.tiles[x+1] && game.tiles[x+1][y+1]) {
+                output.push(game.tiles[x+1][y+1]);
+            }
+            
+            //southwest
+            if (game.tiles[x-1] && game.tiles[x-1][y+1]) {
+                output.push(game.tiles[x-1][y+1]);
+            }
+            
+            //southeast
+            if (game.tiles[x+1] && game.tiles[x+1][y-1]) {
+                output.push(game.tiles[x+1][y-1]);
+            }
+        }
+
+        return output;
+    }
 
     return Tile;
 });

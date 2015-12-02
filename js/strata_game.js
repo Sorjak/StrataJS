@@ -11,14 +11,19 @@ define(["js/bunny.js", "js/flower.js", "js/tile.js", "js/lib/vector2.js", "js/li
         
         bunny = new Bunny( this.tiles[10][10] );
 
-        this.entities.add(bunny);
+        this.addObject(bunny);
 
         for (var i = 10; i >= 0; i--) {
-            rX = Math.floor(Math.random() * this.tiles.length);
-            rY = Math.floor(Math.random() * this.tiles[0].length);
-        
-            flower = new Flower( this.tiles[rX][rY], "orange" );
-            this.entities.add(flower);
+            var ranTile = null;
+
+            while (ranTile == null) {
+                ranTile = this.getRandomTile();
+                if (ranTile != null && ranTile.weight == 0)
+                    ranTile = null;
+            }
+
+            flower = new Flower( ranTile, "orange" );
+            this.addObject(flower);
         };
         
         this.astar = new Astar(this.tiles);
@@ -39,11 +44,15 @@ define(["js/bunny.js", "js/flower.js", "js/tile.js", "js/lib/vector2.js", "js/li
 
     // PUBLIC METHODS
 
+    StrataGame.prototype.addObject = function(object) {
+        this.entities.add(object);
+    }
+
     StrataGame.prototype.getRandomTile = function() {
         var ranX = Math.floor(Math.random() * (RENDERER.width / TILE_SIZE));
         var ranY = Math.floor(Math.random() * (RENDERER.width / TILE_SIZE));
 
-        var tile = game.getTileAtPosition(ranX, ranY);
+        var tile = this.getTileAtPosition(ranX, ranY);
 
         return tile;
     }

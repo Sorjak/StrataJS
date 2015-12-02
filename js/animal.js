@@ -1,14 +1,11 @@
 define(['js/moving_object.js', 'js/lib/state-machine.min.js'], function(MovingObject, StateMachine) {
     "use strict";
-    var bunnyScale = new PIXI.Point(.08, .08);
 
-    function Bunny(tile) {
-        MovingObject.call(this, current_id++, tile, "resources/bunny.png");
+    function Animal(tile, image_path) {
+        MovingObject.call(this, current_id++, tile, image_path);
         
         this.sprite.width = TILE_SIZE;
         this.sprite.height = TILE_SIZE;
-
-        this.tags = new Set(["prey", "herbivore", "solid"]);
 
         this.moveSpeed = 30;
 
@@ -27,13 +24,15 @@ define(['js/moving_object.js', 'js/lib/state-machine.min.js'], function(MovingOb
         this.maxHealth = this.health;
         this.deathRate = .15;
 
+        this.foodTag = "";
+
         this.fsm = this.initStateMachine();
     };
 
-    Bunny.prototype = Object.create(MovingObject.prototype);
-    Bunny.prototype.constructor = Bunny;
+    Animal.prototype = Object.create(MovingObject.prototype);
+    Animal.prototype.constructor = Animal;
 
-    Bunny.prototype.initStateMachine = function() {
+    Animal.prototype.initStateMachine = function() {
         return StateMachine.create({
             initial: 'foraging',
             events: [
@@ -47,7 +46,7 @@ define(['js/moving_object.js', 'js/lib/state-machine.min.js'], function(MovingOb
  
     // OVERRIDES
 
-    Bunny.prototype.update = function(deltaTime) {
+    Animal.prototype.update = function(deltaTime) {
         if (this.fsm.is('foraging')) {
             this.foodTarget = null;
             this.foodPosition = null;
@@ -57,7 +56,7 @@ define(['js/moving_object.js', 'js/lib/state-machine.min.js'], function(MovingOb
 
             } else {
                 this.visionTimer = 0;
-                var flowers = this.lookForNearbyObjects("plant");
+                var flowers = this.lookForNearbyObjects(this.foodTag);
 
                 if (flowers.length > 0) {
                     this.foodTarget = flowers[0];
@@ -112,13 +111,13 @@ define(['js/moving_object.js', 'js/lib/state-machine.min.js'], function(MovingOb
         MovingObject.prototype.update.call(this, deltaTime);
     };
 
-    Bunny.prototype.draw = function() {
+    Animal.prototype.draw = function() {
         
 
         MovingObject.prototype.draw.call(this);
     };
 
-    Bunny.prototype.onDown = function() {
+    Animal.prototype.onDown = function() {
 
 
         MovingObject.prototype.onDown.call(this);
@@ -129,21 +128,21 @@ define(['js/moving_object.js', 'js/lib/state-machine.min.js'], function(MovingOb
     
     // PRIVATE METHODS
 
-    Bunny.prototype.lookForNearbyObjects = function(tag) {
+    Animal.prototype.lookForNearbyObjects = function(tag) {
         var candidates = game.getObjectsByTag(tag);
         var inRange = [];
 
-        var currentBunny = this;
+        var currentAnimal = this;
         candidates.forEach(function(x) {
-            var distance = currentBunny.currentTile.distanceTo(x.currentTile);
-            if (distance < currentBunny.visionRadius && !x.currentTile.hasOccupantWithTag("solid")) {
+            var distance = currentAnimal.currentTile.distanceTo(x.currentTile);
+            if (distance < currentAnimal.visionRadius && !x.currentTile.hasOccupantWithTag("solid")) {
                 inRange.push(x);
             }
         });
 
         inRange.sort(function(a, b) {
-            var distanceA = currentBunny.currentTile.distanceTo(a.currentTile);
-            var distanceB = currentBunny.currentTile.distanceTo(b.currentTile);
+            var distanceA = currentAnimal.currentTile.distanceTo(a.currentTile);
+            var distanceB = currentAnimal.currentTile.distanceTo(b.currentTile);
 
             return distanceA - distanceB;
 
@@ -152,9 +151,8 @@ define(['js/moving_object.js', 'js/lib/state-machine.min.js'], function(MovingOb
 
     };
 
-    Bunny.prototype.birth = function() {
+    Animal.prototype.birth = function() {
         var neighbors = this.currentTile.getNeighbors(true);
-
         var birthTile = null;
 
         for (var i = neighbors.length - 1; i >= 0; i--) {
@@ -166,11 +164,11 @@ define(['js/moving_object.js', 'js/lib/state-machine.min.js'], function(MovingOb
         };
 
         if (birthTile != null) {
-            var child = new Bunny( birthTile );
+            var child = new Animal( birthTile );
             game.addObject(child);
         }
 
     }
 
-    return Bunny;
+    return Animal;
 });

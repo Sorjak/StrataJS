@@ -9,9 +9,9 @@ define(['js/strata_object.js'], function(StrataObject) {
 
         this.moveSpeed = 100;
         this.movePath = null;
-        this.moveIndex = 0;
+        this.moveIndex = 1;
         this.moveFrame = 0;
-        this.targetTile = null;
+        // this.targetTile = null;
     };
 
     MovingObject.prototype = Object.create(StrataObject.prototype);
@@ -23,16 +23,16 @@ define(['js/strata_object.js'], function(StrataObject) {
         if (this.movePath != null) {
             
             if (this.currentTile != this.movePath[this.movePath.length - 1]) {
-                var nextTile = this.movePath[this.moveIndex];
+                var nextTile = this.movePath[this.moveIndex + 1];
                 
                 if (this.moveFrame < this.moveSpeed) {
                     this.moveFrame += deltaTime;
                     this.lerpSprite(nextTile, (this.moveFrame / this.moveSpeed));
                     
                 } else {
-                    
                     this.moveToTile(nextTile);
                 }
+
             } else {
                 this.movePath = null;
             }

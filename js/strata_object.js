@@ -5,6 +5,8 @@ define(['js/lib/vector2.js'], function(Vector2) {
         this.id = id;
         this.tags = new Set();
 
+        this.health = 100;
+
         this.initSprite(new PIXI.Point(tile.position.x, tile.position.y), path, scale, anchor);
         this.rotation = this.sprite.rotation;
         this.currentTile = tile;
@@ -39,7 +41,9 @@ define(['js/lib/vector2.js'], function(Vector2) {
     }
     
     StrataObject.prototype.update = function(deltaTime) {
-
+        if (this.health <= 0) {
+            this.die();
+        }
     }
     
 

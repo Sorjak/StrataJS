@@ -35,7 +35,7 @@ define(['js/lib/binary_heap.js'], function(BinaryHeap) {
             
             neighbors.forEach(function(neighbor) {
                 
-                if (neighbor.weight > 0 && !closedSet.has(neighbor)) {
+                if (neighbor.weight > 0 && !closedSet.has(neighbor) && !neighbor.hasOccupantWithTag("solid")) {
                     potential_g = g_score.get(currentNode.index) + (currentNode.weight - neighbor.weight);
                     
                     if (potential_g >= g_score.get(neighbor.index)) {

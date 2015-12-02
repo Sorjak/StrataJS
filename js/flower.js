@@ -7,10 +7,12 @@ define(['js/strata_object.js'], function(StrataObject) {
         this.sprite.width = TILE_SIZE;
         this.sprite.height = TILE_SIZE;
         
-        this.tags.add("plant");
+        this.tags = new Set(["plant"]);
         
-        this.health = 100;
         this.growth = 0;
+        this.growthRate = .2;
+
+        this.maxNeighbors = 2;
     };
 
     Flower.prototype = Object.create(StrataObject.prototype);
@@ -19,7 +21,7 @@ define(['js/strata_object.js'], function(StrataObject) {
     // OVERRIDES
 
     Flower.prototype.update = function(deltaTime) {
-        //this.grow(deltaTime);
+        this.grow(deltaTime);
 
         StrataObject.prototype.update.call(this, deltaTime);
     };
@@ -40,7 +42,7 @@ define(['js/strata_object.js'], function(StrataObject) {
     // PRIVATE METHODS
     
     Flower.prototype.grow = function(deltaTime) {
-        this.growth += Math.random() * .3 * deltaTime;
+        this.growth += Math.random() * this.growthRate * deltaTime;
         if (this.growth > 100) {
             this.growth = 0;
             this.spawn();
@@ -48,17 +50,30 @@ define(['js/strata_object.js'], function(StrataObject) {
     };
     
     Flower.prototype.spawn = function() {
-        this._log(this.id + " is spawning!");
+        var neighbors = this.currentTile.getNeighbors(false);
+        var canSpawn = 0;
+
+        neighbors.forEach(function(tile) {
+            if (tile.hasOccupantWithTag("plant")) {
+                canSpawn++;
+            }
+        });
+
+        if (canSpawn <= this.maxNeighbors) {
+            var ranTile = neighbors[ Math.round(Math.random() * neighbors.length) ];
+
+            if (ranTile != null && ranTile.weight > 0 && !ranTile.hasOccupantWithTag("plant")) {
+                var child = new Flower( ranTile, "orange");
+                game.addObject(child);
+            }
+        }
+
     };
     
     // PUBLIC METHODS
 
     Flower.prototype.getEaten = function(amount) {
         this.health -= amount;
-
-        if (this.health < 0) {
-            this.die();
-        }
     }
 
     return Flower;
