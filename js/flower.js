@@ -1,18 +1,24 @@
 define(['js/strata_object.js'], function(StrataObject) {
     "use strict";
 
-    function Flower(position, color) {
-        StrataObject.call(this, current_id++, position, "resources/" + color + "_flower.png");
+    function Flower(position, color, dna) {
+        StrataObject.call(this, current_id++, position, "resources/" + color);
         
         this.sprite.width = TILE_SIZE;
         this.sprite.height = TILE_SIZE;
+
+        this.growth = 0;
         
         this.tags = new Set(["plant"]);
         
-        this.growth = 0;
-        this.growthRate = .2;
+        if (typeof dna !== 'undefined') {
+            this.dna = dna;
 
-        this.maxNeighbors = 2;
+        } else {
+            this.dna.growthRate = .2;
+
+            this.dna.maxNeighbors = 2;
+        }
     };
 
     Flower.prototype = Object.create(StrataObject.prototype);
@@ -42,7 +48,7 @@ define(['js/strata_object.js'], function(StrataObject) {
     // PRIVATE METHODS
     
     Flower.prototype.grow = function(deltaTime) {
-        this.growth += Math.random() * this.growthRate * deltaTime;
+        this.growth += Math.random() * this.dna.growthRate * deltaTime;
         if (this.growth > 100) {
             this.growth = 0;
             this.spawn();
@@ -59,11 +65,11 @@ define(['js/strata_object.js'], function(StrataObject) {
             }
         });
 
-        if (canSpawn <= this.maxNeighbors) {
+        if (canSpawn <= this.dna.maxNeighbors) {
             var ranTile = neighbors[ Math.round(Math.random() * neighbors.length) ];
 
             if (ranTile != null && ranTile.weight > 0 && !ranTile.hasOccupantWithTag("plant")) {
-                var child = new Flower( ranTile, "orange");
+                var child = new Flower( ranTile, "orange_flower.png", this.mutate(this.dna) );
                 game.addObject(child);
             }
         }

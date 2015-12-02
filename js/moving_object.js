@@ -7,7 +7,7 @@ define(['js/strata_object.js'], function(StrataObject) {
         this.sprite.width = TILE_SIZE;
         this.sprite.height = TILE_SIZE;
 
-        this.moveSpeed = 100;
+        this.dna.moveSpeed = 30;
         this.movePath = null;
         this.moveIndex = 1;
         this.moveFrame = 0;
@@ -25,9 +25,9 @@ define(['js/strata_object.js'], function(StrataObject) {
             if (this.currentTile != this.movePath[this.movePath.length - 1]) {
                 var nextTile = this.movePath[this.moveIndex + 1];
                 
-                if (this.moveFrame < this.moveSpeed) {
+                if (this.moveFrame < this.dna.moveSpeed) {
                     this.moveFrame += deltaTime;
-                    this.lerpSprite(nextTile, (this.moveFrame / this.moveSpeed));
+                    this.lerpSprite(nextTile, (this.moveFrame / this.dna.moveSpeed));
                     
                 } else {
                     this.moveToTile(nextTile);
@@ -70,8 +70,6 @@ define(['js/strata_object.js'], function(StrataObject) {
         this.moveFrame = 0;
         this.movePath = game.astar.search(this.currentTile, tile);
     };
-
-
 
     // PRIVATE METHODS 
 

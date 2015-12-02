@@ -1,36 +1,39 @@
-define(['js/moving_object.js', 'js/lib/state-machine.min.js'], function(MovingObject, StateMachine) {
+define(['js/animal.js', 'js/lib/state-machine.min.js'], function(Animal, StateMachine) {
     "use strict";
-    var bunnyScale = new PIXI.Point(.08, .08);
 
-    function Bunny(tile) {
-        MovingObject.call(this, current_id++, tile, "resources/bunny.png");
+    function Bunny(tile, dna) {
+        Animal.call(this, tile, "resources/bunny.png");
         
         this.sprite.width = TILE_SIZE;
         this.sprite.height = TILE_SIZE;
 
         this.tags = new Set(["prey", "herbivore", "solid"]);
+        this.foodTag = "plant";
 
-        this.moveSpeed = 30;
 
-        this.visionRadius = 10; //in tile lengths
-        this.visionFrequency = 90;
-        this.visionTimer = 0;
+        if (typeof dna !== 'undefined') {
+            this.dna = dna;
 
-        this.foodTarget = null;
-        this.foodPosition = null;
-        this.eatSpeed = .5;
+        } else {
+            this.dna.moveSpeed = 30;
 
-        this.growth = 0;
-        this.growthRate = .1;
-        this.growthThreshold = 100;
+            this.dna.visionRadius = 10; //in tile lengths
+            this.dna.visionFrequency = 90;
 
-        this.maxHealth = this.health;
-        this.deathRate = .15;
+            this.dna.eatSpeed = .5;
+
+            this.dna.growthRate = .1;
+            this.dna.growthThreshold = 100;
+
+            this.dna.deathRate = .15;
+        }
+        
+
 
         this.fsm = this.initStateMachine();
     };
 
-    Bunny.prototype = Object.create(MovingObject.prototype);
+    Bunny.prototype = Object.create(Animal.prototype);
     Bunny.prototype.constructor = Bunny;
 
     Bunny.prototype.initStateMachine = function() {
@@ -52,25 +55,7 @@ define(['js/moving_object.js', 'js/lib/state-machine.min.js'], function(MovingOb
             this.foodTarget = null;
             this.foodPosition = null;
 
-            if (this.visionTimer < this.visionFrequency) {
-                this.visionTimer += deltaTime;
-
-            } else {
-                this.visionTimer = 0;
-                var flowers = this.lookForNearbyObjects("plant");
-
-                if (flowers.length > 0) {
-                    this.foodTarget = flowers[0];
-                    this.foodPosition = this.foodTarget.currentTile;
-
-                    this.goTo(this.foodPosition);
-                    this.fsm.foundFood();
-
-                } else if (this.movePath == null) {
-                    var rTile = game.getRandomTile();
-                    if (rTile != null) this.goTo(rTile);
-                }
-            }
+            this.forage(deltaTime);
         }
 
         if (this.fsm.is('movingToEat')) {
@@ -78,7 +63,7 @@ define(['js/moving_object.js', 'js/lib/state-machine.min.js'], function(MovingOb
             if (nextTile != null && nextTile.hasOccupantWithTag("solid")) {
                 this.movePath = null;
                 this.fsm.pathBlocked();
-                this.visionTimer = this.visionFrequency;
+                this.visionTimer = this.dna.visionFrequency;
             }
 
             if (this.currentTile == this.foodPosition) {
@@ -89,10 +74,7 @@ define(['js/moving_object.js', 'js/lib/state-machine.min.js'], function(MovingOb
         if (this.fsm.is('eating')) {
 
             if (this.foodTarget.health > 0) {
-                var eatRate = this.eatSpeed * deltaTime;
-                this.foodTarget.getEaten(eatRate);
-                this.growth += this.growthRate * (this.health / this.maxHealth);
-                this.health += eatRate;
+                this.eat(this.foodTarget, this.dna.eatSpeed * deltaTime);
 
             } else {
                 this.foodTarget = null
@@ -102,55 +84,60 @@ define(['js/moving_object.js', 'js/lib/state-machine.min.js'], function(MovingOb
             }
         }
 
-        if (this.growth > this.growthThreshold) {
-            this.growth = 0;
-            this.birth();
-        }
-
-        this.health -= this.deathRate;
-
-        MovingObject.prototype.update.call(this, deltaTime);
+        Animal.prototype.update.call(this, deltaTime);
     };
 
     Bunny.prototype.draw = function() {
         
 
-        MovingObject.prototype.draw.call(this);
+        Animal.prototype.draw.call(this);
     };
 
     Bunny.prototype.onDown = function() {
 
 
-        MovingObject.prototype.onDown.call(this);
+        Animal.prototype.onDown.call(this);
     };
 
 
     // PUBLIC METHODS
+
+    Bunny.prototype.eat = function(food, eatRate) {
+        food.getEaten(eatRate);
+        this.growth += this.dna.growthRate * (this.health / this.dna.maxHealth);
+        this.health = this.health + eatRate > this.dna.maxHealth ?
+                          this.health : 
+                          this.health + eatRate;
+    }
+
+    Bunny.prototype.cripple = function() {
+        this.dna.moveSpeed = 100;
+    }
     
     // PRIVATE METHODS
 
-    Bunny.prototype.lookForNearbyObjects = function(tag) {
-        var candidates = game.getObjectsByTag(tag);
-        var inRange = [];
+    Bunny.prototype.forage = function(deltaTime) {
+        if (this.visionTimer < this.dna.visionFrequency) {
+                this.visionTimer += deltaTime;
 
-        var currentBunny = this;
-        candidates.forEach(function(x) {
-            var distance = currentBunny.currentTile.distanceTo(x.currentTile);
-            if (distance < currentBunny.visionRadius && !x.currentTile.hasOccupantWithTag("solid")) {
-                inRange.push(x);
+        } else {
+            this.visionTimer = 0;
+            var flowers = this.lookForNearbyObjects(this.foodTag);
+
+            if (flowers.length > 0) {
+                this.foodTarget = flowers[0];
+                this.foodPosition = this.foodTarget.currentTile;
+
+                this.goTo(this.foodPosition);
+                this.fsm.foundFood();
+
+            } else if (this.movePath == null) {
+                var rTile = game.getRandomTile();
+                if (rTile != null) this.goTo(rTile);
             }
-        });
+        }
 
-        inRange.sort(function(a, b) {
-            var distanceA = currentBunny.currentTile.distanceTo(a.currentTile);
-            var distanceB = currentBunny.currentTile.distanceTo(b.currentTile);
-
-            return distanceA - distanceB;
-
-        });
-        return inRange;
-
-    };
+    }
 
     Bunny.prototype.birth = function() {
         var neighbors = this.currentTile.getNeighbors(true);
@@ -166,9 +153,12 @@ define(['js/moving_object.js', 'js/lib/state-machine.min.js'], function(MovingOb
         };
 
         if (birthTile != null) {
-            var child = new Bunny( birthTile );
+            var child = new Bunny( birthTile, this.mutate(this.dna) );
+            console.log(child.dna);
             game.addObject(child);
         }
+
+        Animal.prototype.birth.call(this);
 
     }
 

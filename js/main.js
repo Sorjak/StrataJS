@@ -21,20 +21,11 @@ requirejs(["js/lib/pixi/bin/pixi.js"], function(pixi) {
     TILES_CONTAINER = new PIXI.Container();
     ENTITY_CONTAINER = new PIXI.Container();
     
-    STAGE.addChild(TILES_CONTAINER);
-    STAGE.addChild(ENTITY_CONTAINER);
+    // STAGE.addChild(TILES_CONTAINER);
     
-
+    
     requirejs(["js/strata_game.js"], function(StrataGame) {
 
-        game = new StrataGame();
-        // var mapTexture = new PIXI.RenderTexture(RENDERER);
-        // console.log(TILES_CONTAINER);
-        // mapTexture.render(TILES_CONTAINER);
-        // var background = new PIXI.Sprite(mapTexture);
-        // STAGE.addChild(background);
-
-        
         function mainLoop() {
             requestAnimationFrame(mainLoop);
             if (game.running) {
@@ -48,6 +39,25 @@ requirejs(["js/lib/pixi/bin/pixi.js"], function(pixi) {
             fpsCounter.textContent = "FPS: " + Math.floor(PIXI.ticker.shared.FPS);
         }
 
-        mainLoop();
+        // Load static assets and create a render texture
+
+        var loader = PIXI.loader; 
+        loader.add('grass',"resources/grass.jpg");
+        loader.add('mountain',"resources/mountain.png");
+
+        loader.once('complete', function() {
+            game = new StrataGame();
+
+            var tex = TILES_CONTAINER.generateTexture(RENDERER);
+            var background = new PIXI.Sprite(tex);
+            STAGE.addChild(background);
+            STAGE.addChild(ENTITY_CONTAINER);
+            
+            mainLoop();
+        });
+
+        loader.load();
+
+
     });
 });

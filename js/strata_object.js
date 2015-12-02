@@ -5,7 +5,11 @@ define(['js/lib/vector2.js'], function(Vector2) {
         this.id = id;
         this.tags = new Set();
 
-        this.health = 100;
+        this.dna = {
+            maxHealth : 100,
+        };
+
+        this.health = this.dna.maxHealth;
 
         this.initSprite(new PIXI.Point(tile.position.x, tile.position.y), path, scale, anchor);
         this.rotation = this.sprite.rotation;
@@ -49,11 +53,20 @@ define(['js/lib/vector2.js'], function(Vector2) {
 
 
     StrataObject.prototype.onDown = function() {
-        this._log("id: " + this.id 
-            + " | tile index: (" + 
+        var message = "id: " + this.id + 
+        " | tile index: (" + 
             Math.floor(this.currentTile.index.x) + "," + Math.floor(this.currentTile.index.y) 
-            + ")"
-        );
+        + ") | Health: " + this.health + "\nDNA INFO: \n";
+
+
+
+        var curr_dna = this.dna;
+        for (var key in curr_dna) {
+            if (curr_dna.hasOwnProperty(key)) {
+                message += key + " : " + curr_dna[key] + "\n";
+            }
+        }
+        this._log(message);
     }
 
     StrataObject.prototype.moveToTile = function(tile) {
@@ -66,8 +79,28 @@ define(['js/lib/vector2.js'], function(Vector2) {
         this.sprite.position.y = this.currentTile.position.y;
     }
 
+    StrataObject.prototype.mutate = function(dna) {
+        var new_dna = {};
+        for (var key in dna) {
+            if (dna.hasOwnProperty(key)) {
+                
+                var mutatedValue = Math.random() * 2;
+                mutatedValue = Math.max(mutatedValue, .80);
+                mutatedValue = Math.min(mutatedValue, 1.2);
+
+                if (mutatedValue > 0) {
+                    new_dna[key] = dna[key] * mutatedValue
+                } else {
+                    new_dna[key] = dna[key];
+                }
+            }
+        }
+
+        return new_dna;
+    }
+
     StrataObject.prototype.die = function() {
-        game.entities.delete(this);
+        game.removeObject(this);
         ENTITY_CONTAINER.removeChild(this.sprite);
 
         this.currentTile.exit(this);
@@ -76,7 +109,7 @@ define(['js/lib/vector2.js'], function(Vector2) {
 
     StrataObject.prototype._log = function(message) {
         var textarea = document.getElementById("console-text");
-        textarea.textContent += message + "\n";
+        textarea.textContent = message + "\n";
         textarea.scrollTop = textarea.scrollHeight;
     }
 

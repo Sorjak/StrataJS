@@ -12,8 +12,13 @@ define(function() {
         this.graphics = new PIXI.Graphics();
 
         this.occupants = new Set();
-        
+
         this.initSprite();
+
+        // var text = new PIXI.Text(""+this.index.y,{font : '12px Arial', fill : 0xff1010, align : 'center'});
+        // text.x = this.position.x;
+        // text.y = this.position.y;
+        // TILES_CONTAINER.addChild(text);
     };
 
     Tile.prototype.initSprite = function() {

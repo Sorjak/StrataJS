@@ -1,4 +1,4 @@
-define(['js/moving_object.js', 'js/lib/state-machine.min.js'], function(MovingObject, StateMachine) {
+define(['js/moving_object.js'], function(MovingObject) {
     "use strict";
 
     function Animal(tile, image_path) {
@@ -7,106 +7,43 @@ define(['js/moving_object.js', 'js/lib/state-machine.min.js'], function(MovingOb
         this.sprite.width = TILE_SIZE;
         this.sprite.height = TILE_SIZE;
 
-        this.moveSpeed = 30;
-
-        this.visionRadius = 10; //in tile lengths
-        this.visionFrequency = 90;
-        this.visionTimer = 0;
-
         this.foodTarget = null;
         this.foodPosition = null;
-        this.eatSpeed = .5;
 
         this.growth = 0;
-        this.growthRate = .1;
-        this.growthThreshold = 100;
-
-        this.maxHealth = this.health;
-        this.deathRate = .15;
-
+        this.visionTimer = 0;
+        
         this.foodTag = "";
 
-        this.fsm = this.initStateMachine();
+        this.fsm = null;  
+        
+        this.dna.moveSpeed = 30;
+        this.dna.visionRadius = 10;
+        this.dna.visionFrequency = 90;
+
+        this.dna.eatSpeed = .5;
+        this.dna.growthRate = .1;
+        this.dna.growthThreshold = 100;
+
+        this.dna.deathRate = .15;
+        
+
+
     };
 
     Animal.prototype = Object.create(MovingObject.prototype);
     Animal.prototype.constructor = Animal;
 
-    Animal.prototype.initStateMachine = function() {
-        return StateMachine.create({
-            initial: 'foraging',
-            events: [
-                { name: 'foundFood',  from: 'foraging',  to: 'movingToEat'},
-                { name: 'beginEating',  from: 'movingToEat',  to: 'eating'},
-                { name: 'pathBlocked',  from: 'movingToEat',  to: 'foraging'},
-                { name: 'finishFood', from: 'eating', to: 'foraging'},
-            ]
-        });
-    };
- 
     // OVERRIDES
 
     Animal.prototype.update = function(deltaTime) {
-        if (this.fsm.is('foraging')) {
-            this.foodTarget = null;
-            this.foodPosition = null;
 
-            if (this.visionTimer < this.visionFrequency) {
-                this.visionTimer += deltaTime;
-
-            } else {
-                this.visionTimer = 0;
-                var flowers = this.lookForNearbyObjects(this.foodTag);
-
-                if (flowers.length > 0) {
-                    this.foodTarget = flowers[0];
-                    this.foodPosition = this.foodTarget.currentTile;
-
-                    this.goTo(this.foodPosition);
-                    this.fsm.foundFood();
-
-                } else if (this.movePath == null) {
-                    var rTile = game.getRandomTile();
-                    if (rTile != null) this.goTo(rTile);
-                }
-            }
-        }
-
-        if (this.fsm.is('movingToEat')) {
-            var nextTile = this.movePath[this.moveIndex + 1];
-            if (nextTile != null && nextTile.hasOccupantWithTag("solid")) {
-                this.movePath = null;
-                this.fsm.pathBlocked();
-                this.visionTimer = this.visionFrequency;
-            }
-
-            if (this.currentTile == this.foodPosition) {
-                this.fsm.beginEating();
-            }
-        }
-
-        if (this.fsm.is('eating')) {
-
-            if (this.foodTarget.health > 0) {
-                var eatRate = this.eatSpeed * deltaTime;
-                this.foodTarget.getEaten(eatRate);
-                this.growth += this.growthRate * (this.health / this.maxHealth);
-                this.health += eatRate;
-
-            } else {
-                this.foodTarget = null
-                this.foodPosition = null;
-
-                this.fsm.finishFood();
-            }
-        }
-
-        if (this.growth > this.growthThreshold) {
+        if (this.growth > this.dna.growthThreshold) {
             this.growth = 0;
             this.birth();
         }
 
-        this.health -= this.deathRate;
+        this.health -= this.dna.deathRate;
 
         MovingObject.prototype.update.call(this, deltaTime);
     };
@@ -135,7 +72,7 @@ define(['js/moving_object.js', 'js/lib/state-machine.min.js'], function(MovingOb
         var currentAnimal = this;
         candidates.forEach(function(x) {
             var distance = currentAnimal.currentTile.distanceTo(x.currentTile);
-            if (distance < currentAnimal.visionRadius && !x.currentTile.hasOccupantWithTag("solid")) {
+            if (distance < currentAnimal.dna.visionRadius && !x.currentTile.hasOccupantWithTag("solid")) {
                 inRange.push(x);
             }
         });
@@ -152,23 +89,10 @@ define(['js/moving_object.js', 'js/lib/state-machine.min.js'], function(MovingOb
     };
 
     Animal.prototype.birth = function() {
-        var neighbors = this.currentTile.getNeighbors(true);
-        var birthTile = null;
-
-        for (var i = neighbors.length - 1; i >= 0; i--) {
-            var tile = neighbors[i];
-            if (tile.weight > 0) {
-                birthTile = tile;
-                break;
-            }
-        };
-
-        if (birthTile != null) {
-            var child = new Animal( birthTile );
-            game.addObject(child);
-        }
 
     }
+
+
 
     return Animal;
 });
