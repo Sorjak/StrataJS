@@ -29,7 +29,7 @@ define(['js/animal.js', 'js/lib/state-machine.min.js'], function(Animal, StateMa
         }
         
 
-
+        this.health = this.dna.maxHealth;
         this.fsm = this.initStateMachine();
     };
 
@@ -59,11 +59,13 @@ define(['js/animal.js', 'js/lib/state-machine.min.js'], function(Animal, StateMa
         }
 
         if (this.fsm.is('movingToEat')) {
-            var nextTile = this.movePath[this.moveIndex + 1];
-            if (nextTile != null && nextTile.hasOccupantWithTag("solid")) {
-                this.movePath = null;
-                this.fsm.pathBlocked();
-                this.visionTimer = this.dna.visionFrequency;
+            if (this.movePath != null) {
+                var nextTile = this.movePath[this.moveIndex + 1];
+                if (nextTile != null && nextTile.hasOccupantOfType(this.constructor.name)) {
+                    this.movePath = null;
+                    this.fsm.pathBlocked();
+                    this.visionTimer = this.dna.visionFrequency;
+                }
             }
 
             if (this.currentTile == this.foodPosition) {
@@ -99,22 +101,33 @@ define(['js/animal.js', 'js/lib/state-machine.min.js'], function(Animal, StateMa
         Animal.prototype.onDown.call(this);
     };
 
+    Bunny.prototype.eat = function(food, eatRate) {
+        
+        Animal.prototype.eat.call(this, food, eatRate);
+    }
+
+    Bunny.prototype.getStats = function() {
+        var message = "this is a bunny";
+
+        return Animal.prototype.getStats.call(this) + " " + message;
+    }
+
 
     // PUBLIC METHODS
 
-    Bunny.prototype.eat = function(food, eatRate) {
-        food.getEaten(eatRate);
-        this.growth += this.dna.growthRate * (this.health / this.dna.maxHealth);
-        this.health = this.health + eatRate > this.dna.maxHealth ?
-                          this.health : 
-                          this.health + eatRate;
-    }
+
 
     Bunny.prototype.cripple = function() {
-        this.dna.moveSpeed = 100;
+        this.dna.moveSpeed = 1000;
     }
+
+    Bunny.prototype.getEaten = function(amount) {
+        this.health -= amount;
+    }
+
+
     
-    // PRIVATE METHODS
+    // PRIVATE METHODS\
 
     Bunny.prototype.forage = function(deltaTime) {
         if (this.visionTimer < this.dna.visionFrequency) {

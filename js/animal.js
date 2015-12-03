@@ -60,19 +60,39 @@ define(['js/moving_object.js'], function(MovingObject) {
         MovingObject.prototype.onDown.call(this);
     };
 
+    Animal.prototype.getStats = function() {
+        var message = "| Growth : " + (Math.round(this.growth * 100) / 100) + 
+        " | Current State: " + this.fsm.current + "\nDNA INFO: \n";
+
+
+
+        var curr_dna = this.dna;
+        for (var key in curr_dna) {
+            if (curr_dna.hasOwnProperty(key)) {
+                message += "  " + key + " : " + curr_dna[key] + "\n";
+            }
+        };
+
+        return MovingObject.prototype.getStats.call(this) + message;
+    }
+
 
     // PUBLIC METHODS
+
+
     
     // PRIVATE METHODS
 
     Animal.prototype.lookForNearbyObjects = function(tag) {
         var candidates = game.getObjectsByTag(tag);
         var inRange = [];
+        var ig = typeof ignoreSolid !== 'undefined' ? ignoreSolid : false;
 
         var currentAnimal = this;
         candidates.forEach(function(x) {
             var distance = currentAnimal.currentTile.distanceTo(x.currentTile);
-            if (distance < currentAnimal.dna.visionRadius && !x.currentTile.hasOccupantWithTag("solid")) {
+            if (distance < currentAnimal.dna.visionRadius 
+                && !x.currentTile.hasOccupantOfType(currentAnimal.constructor.name)) {
                 inRange.push(x);
             }
         });
@@ -90,6 +110,14 @@ define(['js/moving_object.js'], function(MovingObject) {
 
     Animal.prototype.birth = function() {
 
+    }
+
+    Animal.prototype.eat = function(food, eatRate) {
+        food.getEaten(eatRate);
+        this.growth += this.dna.growthRate * (this.health / this.dna.maxHealth);
+        this.health = this.health + eatRate > this.dna.maxHealth ?
+                          this.health : 
+                          this.health + eatRate;
     }
 
 

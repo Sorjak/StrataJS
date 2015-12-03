@@ -6,7 +6,7 @@ define(['js/lib/binary_heap.js'], function(BinaryHeap) {
         this.grid = grid;
     };
     
-    Astar.prototype.search = function(start, end) {
+    Astar.prototype.search = function(start, end, ignoreType) {
         breadcrumbs = new Map();
         
         g_score = this.infinityMap();
@@ -35,7 +35,10 @@ define(['js/lib/binary_heap.js'], function(BinaryHeap) {
             
             neighbors.forEach(function(neighbor) {
                 
-                if (neighbor.weight > 0 && !closedSet.has(neighbor) && !neighbor.hasOccupantWithTag("solid")) {
+                if (neighbor.weight > 0 
+                    && !closedSet.has(neighbor) 
+                    && !neighbor.hasOccupantOfType(ignoreType) ) {
+
                     potential_g = g_score.get(currentNode.index) + (currentNode.weight - neighbor.weight);
                     
                     if (potential_g >= g_score.get(neighbor.index)) {

@@ -56,9 +56,20 @@ define(function() {
     }
 
     Tile.prototype.hasOccupantWithTag = function(tag) {
-        output = false;
+        var output = false;
         this.occupants.forEach(function(entity) {
             if (entity.tags.has(tag))
+                output = true;
+        });
+
+
+        return output;
+    }
+
+    Tile.prototype.hasOccupantOfType = function(type) {
+        var output = false;
+        this.occupants.forEach(function(entity) {
+            if (entity.constructor.name == type)
                 output = true;
         });
 

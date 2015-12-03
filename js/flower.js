@@ -15,10 +15,12 @@ define(['js/strata_object.js'], function(StrataObject) {
             this.dna = dna;
 
         } else {
-            this.dna.growthRate = .2;
+            this.dna.growthRate = .4;
 
             this.dna.maxNeighbors = 2;
         }
+
+        this.health = this.dna.maxHealth;
     };
 
     Flower.prototype = Object.create(StrataObject.prototype);

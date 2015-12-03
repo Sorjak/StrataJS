@@ -9,7 +9,7 @@ define(['js/lib/vector2.js'], function(Vector2) {
             maxHealth : 100,
         };
 
-        this.health = this.dna.maxHealth;
+        // this.health = this.dna.maxHealth;
 
         this.initSprite(new PIXI.Point(tile.position.x, tile.position.y), path, scale, anchor);
         this.rotation = this.sprite.rotation;
@@ -53,20 +53,22 @@ define(['js/lib/vector2.js'], function(Vector2) {
 
 
     StrataObject.prototype.onDown = function() {
-        var message = "id: " + this.id + 
-        " | tile index: (" + 
-            Math.floor(this.currentTile.index.x) + "," + Math.floor(this.currentTile.index.y) 
-        + ") | Health: " + this.health + "\nDNA INFO: \n";
+        // var message = "id: " + this.id + 
+        // " | tile index: (" + 
+        //     Math.floor(this.currentTile.index.x) + "," + Math.floor(this.currentTile.index.y) 
+        // + ") | Health: " + this.health + "\nDNA INFO: \n";
 
 
 
-        var curr_dna = this.dna;
-        for (var key in curr_dna) {
-            if (curr_dna.hasOwnProperty(key)) {
-                message += key + " : " + curr_dna[key] + "\n";
-            }
-        }
-        this._log(message);
+        // var curr_dna = this.dna;
+        // for (var key in curr_dna) {
+        //     if (curr_dna.hasOwnProperty(key)) {
+        //         message += "  " + key + " : " + curr_dna[key] + "\n";
+        //     }
+        // }
+        // this._log(message);
+
+        game.showStatsFor(this.id);
     }
 
     StrataObject.prototype.moveToTile = function(tile) {
@@ -113,6 +115,14 @@ define(['js/lib/vector2.js'], function(Vector2) {
         textarea.scrollTop = textarea.scrollHeight;
     }
 
+    StrataObject.prototype.getStats = function() {
+        var message = "id: " + this.id + 
+        " | tile index: (" + 
+            Math.floor(this.currentTile.index.x) + "," + Math.floor(this.currentTile.index.y) 
+        + ") | Health: " + Math.round(this.health * 100) / 100;
+
+        return message;
+    };
 
     return StrataObject;
 });

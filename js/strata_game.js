@@ -1,5 +1,5 @@
-define(["js/bunny.js", "js/flower.js", "js/tile.js", "js/lib/vector2.js", "js/lib/astar.js"], 
-        function(Bunny, Flower, Tile, Vector2, Astar) {
+define(["js/bunny.js", "js/wolf.js", "js/flower.js", "js/tile.js", "js/lib/vector2.js", "js/lib/astar.js"], 
+        function(Bunny, Wolf, Flower, Tile, Vector2, Astar) {
         
     StrataGame = function()
     {
@@ -7,11 +7,27 @@ define(["js/bunny.js", "js/flower.js", "js/tile.js", "js/lib/vector2.js", "js/li
         this.entities = [];
         this.tiles = [];
 
-        this.generateTiles();
-        
-        bunny = new Bunny( this.tiles[10][10] );
+        this.statObject = null;
+        this.statConsole = document.getElementById("console-text");
 
-        this.addObject(bunny);
+        this.generateTiles();
+
+        wolf = new Wolf( this.tiles[20][20] );
+
+        this.addObject(wolf);
+
+        for (var i = 2; i >= 0; i--) {
+            var ranTile = null;
+
+            while (ranTile == null) {
+                ranTile = this.getRandomTile();
+                if (ranTile != null && ranTile.weight == 0)
+                    ranTile = null;
+            }
+
+            bunny = new Bunny( ranTile );
+            this.addObject(bunny);
+        };
 
         for (var i = 10; i >= 0; i--) {
             var ranTile = null;
@@ -34,6 +50,12 @@ define(["js/bunny.js", "js/flower.js", "js/tile.js", "js/lib/vector2.js", "js/li
         this.entities.forEach(function(entity) {
             entity.update(PIXI.ticker.shared.deltaTime);
         });
+
+
+        if (this.statObject != null) {
+            this.statConsole.textContent = this.statObject.getStats();
+        // statConsole.scrollTop = textarea.scrollHeight;
+        }
     }
 
     StrataGame.prototype.draw = function() {
@@ -79,6 +101,10 @@ define(["js/bunny.js", "js/flower.js", "js/tile.js", "js/lib/vector2.js", "js/li
         });
 
         return output;
+    }
+
+    StrataGame.prototype.showStatsFor = function(id) {
+        this.statObject = this.getObjectById(id);
     }
 
 

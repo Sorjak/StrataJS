@@ -62,13 +62,22 @@ define(['js/strata_object.js'], function(StrataObject) {
         StrataObject.prototype.moveToTile.call(this, tile);
     }
 
+    MovingObject.prototype.getStats = function() {
+        var message = "";
+
+        return StrataObject.prototype.getStats.call(this) + " " + message;
+    }
+
 
     // PUBLIC METHODS
 
-    MovingObject.prototype.goTo = function(tile) {
+    MovingObject.prototype.goTo = function(tile, ignoreType) {
         this.moveIndex = 0;
         this.moveFrame = 0;
-        this.movePath = game.astar.search(this.currentTile, tile);
+
+        ignoreType = typeof ignoreType !== 'undefined' ? ignoreType : this.constructor.name;
+
+        this.movePath = game.astar.search(this.currentTile, tile, ignoreType);
     };
 
     // PRIVATE METHODS 
