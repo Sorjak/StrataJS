@@ -1,22 +1,22 @@
-define(["js/bunny.js", "js/wolf.js", "js/flower.js", "js/tile.js", "js/lib/vector2.js", "js/lib/astar.js"], 
-        function(Bunny, Wolf, Flower, Tile, Vector2, Astar) {
+define(["js/strata_world.js", "js/bunny.js", "js/wolf.js", "js/flower.js", "js/tile.js", "js/lib/astar.js"], 
+        function(StrataWorld, Bunny, Wolf, Flower, Tile, Astar) {
         
     StrataGame = function()
     {
         this.running = true;
         this.entities = [];
-        this.tiles = [];
 
         this.statObject = null;
         this.statConsole = document.getElementById("console-text");
 
-        this.generateTiles();
+        this.world = new StrataWorld( 40, 40, TILE_SIZE);
+        this.world.generateTiles();
 
-        wolf = new Wolf( this.tiles[20][20] );
+        wolf = new Wolf( this.world.tiles[20][20], SECOND_LAYER );
 
         this.addObject(wolf);
 
-        for (var i = 2; i >= 0; i--) {
+        for (var i = 4; i >= 0; i--) {
             var ranTile = null;
 
             while (ranTile == null) {
@@ -25,11 +25,11 @@ define(["js/bunny.js", "js/wolf.js", "js/flower.js", "js/tile.js", "js/lib/vecto
                     ranTile = null;
             }
 
-            bunny = new Bunny( ranTile );
+            bunny = new Bunny( ranTile, SECOND_LAYER  );
             this.addObject(bunny);
         };
 
-        for (var i = 10; i >= 0; i--) {
+        for (var i = 15; i >= 0; i--) {
             var ranTile = null;
 
             while (ranTile == null) {
@@ -38,11 +38,11 @@ define(["js/bunny.js", "js/wolf.js", "js/flower.js", "js/tile.js", "js/lib/vecto
                     ranTile = null;
             }
 
-            flower = new Flower( ranTile, "orange_flower.png" );
+            flower = new Flower( ranTile, FIRST_LAYER, "orange_flower.png" );
             this.addObject(flower);
         };
         
-        this.astar = new Astar(this.tiles);
+        this.astar = new Astar(this.world.tiles);
         
     };
 
@@ -52,9 +52,10 @@ define(["js/bunny.js", "js/wolf.js", "js/flower.js", "js/tile.js", "js/lib/vecto
         });
 
 
-        if (this.statObject != null) {
+        if (this.statObject != null && this.statObject.health > 0) {
             this.statConsole.textContent = this.statObject.getStats();
-        // statConsole.scrollTop = textarea.scrollHeight;
+        } else {
+            this.statConsole.textContent = "";
         }
     }
 
@@ -79,8 +80,8 @@ define(["js/bunny.js", "js/wolf.js", "js/flower.js", "js/tile.js", "js/lib/vecto
     }
 
     StrataGame.prototype.getRandomTile = function() {
-        var ranX = Math.floor(Math.random() * (this.tiles.length));
-        var ranY = Math.floor(Math.random() * (this.tiles[0].length));
+        var ranX = Math.floor(Math.random() * (this.world.tiles.length));
+        var ranY = Math.floor(Math.random() * (this.world.tiles[0].length));
 
         var tile = this.getTileAtPosition(ranX, ranY);
 
@@ -88,7 +89,7 @@ define(["js/bunny.js", "js/wolf.js", "js/flower.js", "js/tile.js", "js/lib/vecto
     }
 
     StrataGame.prototype.getTileAtPosition = function(x, y) {
-        var output = this.tiles[x][y];
+        var output = this.world.tiles[x][y];
 
         return output ? output : null;
     }
@@ -109,17 +110,6 @@ define(["js/bunny.js", "js/wolf.js", "js/flower.js", "js/tile.js", "js/lib/vecto
 
 
     // PRIVATE METHODS
-
-    StrataGame.prototype.generateTiles = function() {
-        
-        for (var i = 0; i < (RENDERER.width / TILE_SIZE) - 1; i++) {
-            this.tiles[i] = [];
-            for (var j = 0; j < (RENDERER.height / TILE_SIZE) ; j++) {
-                tile = new Tile( i, j );
-                this.tiles[i][j] = tile;
-            }
-        }
-    }
 
 
     

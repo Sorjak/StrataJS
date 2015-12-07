@@ -1,8 +1,8 @@
 define(['js/strata_object.js'], function(StrataObject) {
     "use strict";
 
-    function MovingObject(id, tile, path) {
-        StrataObject.call(this, id, tile, path);
+    function MovingObject(id, tile, container, path) {
+        StrataObject.call(this, id, tile, container, path);
         
         this.sprite.width = TILE_SIZE;
         this.sprite.height = TILE_SIZE;

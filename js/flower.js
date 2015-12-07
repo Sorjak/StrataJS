@@ -1,8 +1,8 @@
 define(['js/strata_object.js'], function(StrataObject) {
     "use strict";
 
-    function Flower(position, color, dna) {
-        StrataObject.call(this, current_id++, position, "resources/" + color);
+    function Flower(tile, container, color, dna) {
+        StrataObject.call(this, current_id++, tile, container, "resources/" + color);
         
         this.sprite.width = TILE_SIZE;
         this.sprite.height = TILE_SIZE;
@@ -17,7 +17,10 @@ define(['js/strata_object.js'], function(StrataObject) {
         } else {
             this.dna.growthRate = .4;
 
-            this.dna.maxNeighbors = 2;
+            // this.dna.maxNeighbors = 2;
+            this.dna.growthThreshold = 100;
+
+            this.dna.deathRate = .02;
         }
 
         this.health = this.dna.maxHealth;
@@ -46,12 +49,24 @@ define(['js/strata_object.js'], function(StrataObject) {
         StrataObject.prototype.onDown.call(this);
     };
     
+    Flower.prototype.getStats = function() {
+        var message = " | Growth : " + (Math.round(this.growth * 100) / 100) + "\nDNA INFO: \n";
+
+        var curr_dna = this.dna;
+        for (var key in curr_dna) {
+            if (curr_dna.hasOwnProperty(key)) {
+                message += "  " + key + " : " + curr_dna[key] + "\n";
+            }
+        };
+
+        return StrataObject.prototype.getStats.call(this) + message;
+    }
     
     // PRIVATE METHODS
     
     Flower.prototype.grow = function(deltaTime) {
         this.growth += Math.random() * this.dna.growthRate * deltaTime;
-        if (this.growth > 100) {
+        if (this.growth > this.dna.growthThreshold) {
             this.growth = 0;
             this.spawn();
         }
@@ -67,11 +82,11 @@ define(['js/strata_object.js'], function(StrataObject) {
             }
         });
 
-        if (canSpawn <= this.dna.maxNeighbors) {
+        if (canSpawn <= 2) {
             var ranTile = neighbors[ Math.round(Math.random() * neighbors.length) ];
 
             if (ranTile != null && ranTile.weight > 0 && !ranTile.hasOccupantWithTag("plant")) {
-                var child = new Flower( ranTile, "orange_flower.png", this.mutate(this.dna) );
+                var child = new Flower( ranTile, this.container, "orange_flower.png", this.mutate(this.dna) );
                 game.addObject(child);
             }
         }

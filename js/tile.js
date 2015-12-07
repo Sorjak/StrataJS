@@ -2,9 +2,10 @@
 define(function() {
     "use strict";
     
-    function Tile(hindex, vindex) {
+    function Tile(hindex, vindex, container) {
         this.position = new Vector2(hindex * TILE_SIZE, vindex * TILE_SIZE);
         this.index = new Vector2(hindex, vindex);
+        this.container = container;
         
         var ran = Math.random() * 10;
         this.weight = ran > .3 ? 1 : 0;
@@ -33,7 +34,7 @@ define(function() {
         this.sprite.position.x = this.position.x;
         this.sprite.position.y = this.position.y;
         
-        TILES_CONTAINER.addChild(this.sprite);
+        this.container.addChild(this.sprite);
     };
 
     Tile.prototype.enter = function(entity) {
@@ -100,45 +101,45 @@ define(function() {
         var output = [];
         
         //west
-        if (game.tiles[x-1] && game.tiles[x-1][y]) {
-            output.push(game.tiles[x-1][y]);
+        if (game.world.tiles[x-1] && game.world.tiles[x-1][y]) {
+            output.push(game.world.tiles[x-1][y]);
         }
         
         //north
-        if (game.tiles[x] && game.tiles[x][y-1]) {
-            output.push(game.tiles[x][y-1]);
+        if (game.world.tiles[x] && game.world.tiles[x][y-1]) {
+            output.push(game.world.tiles[x][y-1]);
         }
         
         //east
-        if (game.tiles[x+1] && game.tiles[x+1][y]) {
-            output.push(game.tiles[x+1][y]);
+        if (game.world.tiles[x+1] && game.world.tiles[x+1][y]) {
+            output.push(game.world.tiles[x+1][y]);
         }
         
         //south
-        if (game.tiles[x] && game.tiles[x][y+1]) {
-            output.push(game.tiles[x][y+1]);
+        if (game.world.tiles[x] && game.world.tiles[x][y+1]) {
+            output.push(game.world.tiles[x][y+1]);
         }
         
 
         if (diagonal) {
             //northwest
-            if (game.tiles[x-1] && game.tiles[x-1][y-1]) {
-                output.push(game.tiles[x-1][y-1]);
+            if (game.world.tiles[x-1] && game.world.tiles[x-1][y-1]) {
+                output.push(game.world.tiles[x-1][y-1]);
             }
             
             //northeast
-            if (game.tiles[x+1] && game.tiles[x+1][y+1]) {
-                output.push(game.tiles[x+1][y+1]);
+            if (game.world.tiles[x+1] && game.world.tiles[x+1][y+1]) {
+                output.push(game.world.tiles[x+1][y+1]);
             }
             
             //southwest
-            if (game.tiles[x-1] && game.tiles[x-1][y+1]) {
-                output.push(game.tiles[x-1][y+1]);
+            if (game.world.tiles[x-1] && game.world.tiles[x-1][y+1]) {
+                output.push(game.world.tiles[x-1][y+1]);
             }
             
             //southeast
-            if (game.tiles[x+1] && game.tiles[x+1][y-1]) {
-                output.push(game.tiles[x+1][y-1]);
+            if (game.world.tiles[x+1] && game.world.tiles[x+1][y-1]) {
+                output.push(game.world.tiles[x+1][y-1]);
             }
         }
 

@@ -1,17 +1,17 @@
 define(['js/lib/vector2.js'], function(Vector2) {
     "use strict";
 
-    function StrataObject(id, tile, path, scale, anchor) {
+    function StrataObject(id, tile, container, path) {
         this.id = id;
         this.tags = new Set();
+        this.container = container;
 
         this.dna = {
             maxHealth : 100,
+            deathRate : .15
         };
 
-        // this.health = this.dna.maxHealth;
-
-        this.initSprite(new PIXI.Point(tile.position.x, tile.position.y), path, scale, anchor);
+        this.initSprite(new PIXI.Point(tile.position.x, tile.position.y), path);
         this.rotation = this.sprite.rotation;
         this.currentTile = tile;
         this.currentTile.enter(this);
@@ -27,17 +27,14 @@ define(['js/lib/vector2.js'], function(Vector2) {
         
     };
 
-    StrataObject.prototype.initSprite = function(pos, path, scale, anchor) {
+    StrataObject.prototype.initSprite = function(pos,  path) {
         this.sprite = new PIXI.Sprite.fromImage(path);
 
         this.sprite.position = pos;
 
-        this.sprite.scale = typeof scale !== 'undefined' ? scale : new PIXI.Point(.1, .1);
-        this.sprite.anchor = typeof anchor !== 'undefined' ? anchor : new PIXI.Point(0, 0);
-
         this.sprite.interactive = true;
 
-        ENTITY_CONTAINER.addChild(this.sprite);
+        this.container.addChild(this.sprite);
     }
 
     StrataObject.prototype.draw = function() {
@@ -45,6 +42,8 @@ define(['js/lib/vector2.js'], function(Vector2) {
     }
     
     StrataObject.prototype.update = function(deltaTime) {
+
+        this.health -= this.dna.deathRate;
         if (this.health <= 0) {
             this.die();
         }
@@ -53,21 +52,6 @@ define(['js/lib/vector2.js'], function(Vector2) {
 
 
     StrataObject.prototype.onDown = function() {
-        // var message = "id: " + this.id + 
-        // " | tile index: (" + 
-        //     Math.floor(this.currentTile.index.x) + "," + Math.floor(this.currentTile.index.y) 
-        // + ") | Health: " + this.health + "\nDNA INFO: \n";
-
-
-
-        // var curr_dna = this.dna;
-        // for (var key in curr_dna) {
-        //     if (curr_dna.hasOwnProperty(key)) {
-        //         message += "  " + key + " : " + curr_dna[key] + "\n";
-        //     }
-        // }
-        // this._log(message);
-
         game.showStatsFor(this.id);
     }
 
@@ -103,7 +87,7 @@ define(['js/lib/vector2.js'], function(Vector2) {
 
     StrataObject.prototype.die = function() {
         game.removeObject(this);
-        ENTITY_CONTAINER.removeChild(this.sprite);
+        this.container.removeChild(this.sprite);
 
         this.currentTile.exit(this);
     }

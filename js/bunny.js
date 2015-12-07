@@ -1,8 +1,8 @@
 define(['js/animal.js', 'js/lib/state-machine.min.js'], function(Animal, StateMachine) {
     "use strict";
 
-    function Bunny(tile, dna) {
-        Animal.call(this, tile, "resources/bunny.png");
+    function Bunny(tile, container, dna) {
+        Animal.call(this, tile, container, "resources/bunny.png");
         
         this.sprite.width = TILE_SIZE;
         this.sprite.height = TILE_SIZE;
@@ -166,8 +166,7 @@ define(['js/animal.js', 'js/lib/state-machine.min.js'], function(Animal, StateMa
         };
 
         if (birthTile != null) {
-            var child = new Bunny( birthTile, this.mutate(this.dna) );
-            console.log(child.dna);
+            var child = new Bunny( birthTile, this.container, this.mutate(this.dna) );
             game.addObject(child);
         }
 

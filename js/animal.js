@@ -1,8 +1,8 @@
 define(['js/moving_object.js'], function(MovingObject) {
     "use strict";
 
-    function Animal(tile, image_path) {
-        MovingObject.call(this, current_id++, tile, image_path);
+    function Animal(tile, container, image_path) {
+        MovingObject.call(this, current_id++, tile, container, image_path);
         
         this.sprite.width = TILE_SIZE;
         this.sprite.height = TILE_SIZE;
@@ -42,8 +42,6 @@ define(['js/moving_object.js'], function(MovingObject) {
             this.growth = 0;
             this.birth();
         }
-
-        this.health -= this.dna.deathRate;
 
         MovingObject.prototype.update.call(this, deltaTime);
     };
