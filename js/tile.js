@@ -94,6 +94,18 @@ define(function() {
         return Math.sqrt(dx * dx + dy * dy);
     };
 
+    Tile.prototype.screenDistanceTo = function(other) {
+        var dx = this.position.x - other.position.x; 
+        var dy = this.position.y - other.position.y;
+        return Math.sqrt(dx * dx + dy * dy);
+    };
+
+    Tile.prototype.screenDistanceToVector = function(v) {
+        var dx = this.position.x - v.x; 
+        var dy = this.position.y - v.y;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
 
     Tile.prototype.getNeighbors = function(diagonal) {
         var x = this.index.x;

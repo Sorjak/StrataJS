@@ -15,12 +15,11 @@ define(['js/strata_object.js'], function(StrataObject) {
             this.dna = dna;
 
         } else {
+            this.dna.maxHealth = 120;
             this.dna.growthRate = .4;
 
             // this.dna.maxNeighbors = 2;
             this.dna.growthThreshold = 100;
-
-            this.dna.deathRate = .02;
         }
 
         this.health = this.dna.maxHealth;
@@ -82,7 +81,7 @@ define(['js/strata_object.js'], function(StrataObject) {
             }
         });
 
-        if (canSpawn <= 2) {
+        if (canSpawn <= 1) {
             var ranTile = neighbors[ Math.round(Math.random() * neighbors.length) ];
 
             if (ranTile != null && ranTile.weight > 0 && !ranTile.hasOccupantWithTag("plant")) {

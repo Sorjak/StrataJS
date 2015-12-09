@@ -8,8 +8,10 @@ define(['js/lib/vector2.js'], function(Vector2) {
 
         this.dna = {
             maxHealth : 100,
-            deathRate : .15
+            //deathRate : .15
         };
+
+        this.deathRate = .1;
 
         this.initSprite(new PIXI.Point(tile.position.x, tile.position.y), path);
         this.rotation = this.sprite.rotation;
@@ -43,7 +45,8 @@ define(['js/lib/vector2.js'], function(Vector2) {
     
     StrataObject.prototype.update = function(deltaTime) {
 
-        this.health -= this.dna.deathRate;
+        //this.health -= this.dna.deathRate;
+        this.health -= this.deathRate;
         if (this.health <= 0) {
             this.die();
         }
@@ -103,7 +106,7 @@ define(['js/lib/vector2.js'], function(Vector2) {
         var message = "id: " + this.id + 
         " | tile index: (" + 
             Math.floor(this.currentTile.index.x) + "," + Math.floor(this.currentTile.index.y) 
-        + ") | Health: " + Math.round(this.health * 100) / 100;
+        + ") | Health: " + Math.round(this.health) ;
 
         return message;
     };

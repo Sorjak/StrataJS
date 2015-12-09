@@ -7,10 +7,12 @@ define(['js/strata_object.js'], function(StrataObject) {
         this.sprite.width = TILE_SIZE;
         this.sprite.height = TILE_SIZE;
 
-        this.dna.moveSpeed = 30;
+        this.dna.moveSpeed = .5;
         this.movePath = null;
         this.moveIndex = 1;
         this.moveFrame = 0;
+        this.startMove = null;
+        // this.distanceToMove = 0;
         // this.targetTile = null;
     };
 
@@ -24,10 +26,15 @@ define(['js/strata_object.js'], function(StrataObject) {
             
             if (this.currentTile != this.movePath[this.movePath.length - 1]) {
                 var nextTile = this.movePath[this.moveIndex + 1];
-                
-                if (this.moveFrame < this.dna.moveSpeed) {
-                    this.moveFrame += deltaTime;
-                    this.lerpSprite(nextTile, (this.moveFrame / this.dna.moveSpeed));
+                // var totalDistance = this.currentTile.screenDistanceTo(nextTile);
+                var totalDistance = nextTile.screenDistanceToVector(this.startMove);
+                var percentDistance = this.moveFrame / totalDistance;
+
+                if (percentDistance < 1) {
+                    this.moveFrame += this.dna.moveSpeed;
+
+                    this.sprite.position = this.lerpPoint(this.startMove, nextTile.position, percentDistance);
+                    
                     
                 } else {
                     this.moveToTile(nextTile);
@@ -54,8 +61,8 @@ define(['js/strata_object.js'], function(StrataObject) {
     };
 
     MovingObject.prototype.moveToTile = function(tile) {
-        // potentially make this a tween.
         
+        this.startMove = this.sprite.position;
         this.moveFrame = 0;
         this.moveIndex++;
 
@@ -74,6 +81,8 @@ define(['js/strata_object.js'], function(StrataObject) {
     MovingObject.prototype.goTo = function(tile, ignoreType) {
         this.moveIndex = 0;
         this.moveFrame = 0;
+        // this.distanceToMove = tile.screenDistanceToVector(this.sprite.position);
+        this.startMove = this.sprite.position;
 
         ignoreType = typeof ignoreType !== 'undefined' ? ignoreType : this.constructor.name;
 
@@ -82,9 +91,15 @@ define(['js/strata_object.js'], function(StrataObject) {
 
     // PRIVATE METHODS 
 
-    MovingObject.prototype.lerpSprite = function(nextTile, time) {
-        this.sprite.position.x += (nextTile.position.x - this.sprite.position.x) * time;  
-        this.sprite.position.y += (nextTile.position.y - this.sprite.position.y) * time;
+    MovingObject.prototype.lerpPoint = function(from, to, time) {
+        output = new PIXI.Point();
+        output.x = from.x + (to.x - from.x) * time;  
+        output.y = from.y + (to.y - from.y) * time;  
+
+        // output.x = (1-time) * from.x + time * to.x;
+        // output.y = (1-time) * from.y + time * to.y;
+
+        return output;
     }
 
     return MovingObject;

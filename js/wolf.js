@@ -15,18 +15,19 @@ define(['js/animal.js', 'js/lib/state-machine.min.js'], function(Animal, StateMa
             this.dna = dna;
 
         } else {
-            this.dna.maxHealth = 120;
-            this.dna.moveSpeed = 20;
+            this.dna.maxHealth = 300;
+            this.dna.moveSpeed = 1.8;
 
             this.dna.visionRadius = 15; //in tile lengths
             this.dna.visionFrequency = 90;
 
             this.dna.eatSpeed = 1.1;
 
-            this.dna.growthRate = .1;
+            this.dna.growthRate = .4;
             this.dna.growthThreshold = 100;
 
-            this.dna.deathRate = .03;
+            this.dna.hungerRate = .05;
+            this.dna.hungerThreshold = 100;
         }
         
 
@@ -57,13 +58,9 @@ define(['js/animal.js', 'js/lib/state-machine.min.js'], function(Animal, StateMa
             this.foodTarget = null;
             this.foodPosition = null;
 
-            if (this.health < (this.dna.maxHealth * .75)) {
+            if (this.hunger > this.dna.hungerThreshold * .75) {
                 this.fsm.getHungry();
             }
-            // } else if (this.movePath == null) {
-            //     var rTile = game.getRandomTile();
-            //     if (rTile != null) this.goTo(rTile);
-            // }
 
         }
 
@@ -99,6 +96,7 @@ define(['js/animal.js', 'js/lib/state-machine.min.js'], function(Animal, StateMa
             } else {
                 this.foodTarget = null
                 this.foodPosition = null;
+                this.hunger = 0;
 
                 this.fsm.finishFood();
             }

@@ -10,6 +10,9 @@ define(['js/moving_object.js'], function(MovingObject) {
         this.foodTarget = null;
         this.foodPosition = null;
 
+        this.deathRate = .05;
+
+        this.hunger = 0;
         this.growth = 0;
         this.visionTimer = 0;
         
@@ -17,7 +20,7 @@ define(['js/moving_object.js'], function(MovingObject) {
 
         this.fsm = null;  
         
-        this.dna.moveSpeed = 30;
+        this.dna.moveSpeed = .5;
         this.dna.visionRadius = 10;
         this.dna.visionFrequency = 90;
 
@@ -25,8 +28,8 @@ define(['js/moving_object.js'], function(MovingObject) {
         this.dna.growthRate = .1;
         this.dna.growthThreshold = 100;
 
-        this.dna.deathRate = .15;
-        
+        this.dna.hungerRate = .1;
+        this.dna.hungerThreshold = 100;
 
 
     };
@@ -37,6 +40,13 @@ define(['js/moving_object.js'], function(MovingObject) {
     // OVERRIDES
 
     Animal.prototype.update = function(deltaTime) {
+
+        this.hunger += this.dna.hungerRate;
+
+        this.hunger = Math.max(this.hunger, 0);
+
+        if (this.hunger > this.dna.hungerThreshold)
+            this.health -= this.hunger / 500;
 
         if (this.growth > this.dna.growthThreshold) {
             this.growth = 0;
@@ -59,7 +69,8 @@ define(['js/moving_object.js'], function(MovingObject) {
     };
 
     Animal.prototype.getStats = function() {
-        var message = "| Growth : " + (Math.round(this.growth * 100) / 100) + 
+        var message = "| Growth : " + (Math.round(this.growth)) + 
+        " | Hunger : " + (Math.round(this.hunger)) + 
         " | Current State: " + this.fsm.current + "\nDNA INFO: \n";
 
 
@@ -113,9 +124,9 @@ define(['js/moving_object.js'], function(MovingObject) {
     Animal.prototype.eat = function(food, eatRate) {
         food.getEaten(eatRate);
         this.growth += this.dna.growthRate * (this.health / this.dna.maxHealth);
-        this.health = this.health + eatRate > this.dna.maxHealth ?
-                          this.health : 
-                          this.health + eatRate;
+        // this.health = this.health + eatRate > this.dna.maxHealth ?
+        //                   this.health : 
+        //                   this.health + eatRate;
     }
 
 
