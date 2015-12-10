@@ -15,7 +15,7 @@ define(['js/animal.js', 'js/lib/state-machine.min.js'], function(Animal, StateMa
             this.dna = dna;
 
         } else {
-            this.dna.maxHealth = 250;
+            this.dna.maxHealth = 200;
             this.dna.moveSpeed = 1.5;
 
             this.dna.visionRadius = 10; //in tile lengths
@@ -23,7 +23,7 @@ define(['js/animal.js', 'js/lib/state-machine.min.js'], function(Animal, StateMa
 
             this.dna.eatSpeed = .3;
 
-            this.dna.growthRate = .25;
+            this.dna.growthRate = .15;
             this.dna.growthThreshold = 100;
 
             this.dna.hungerRate = .1;
@@ -83,7 +83,6 @@ define(['js/animal.js', 'js/lib/state-machine.min.js'], function(Animal, StateMa
             } else {
                 this.foodTarget = null
                 this.foodPosition = null;
-                this.hunger = 0;
 
                 this.fsm.finishFood();
             }
@@ -105,7 +104,6 @@ define(['js/animal.js', 'js/lib/state-machine.min.js'], function(Animal, StateMa
     };
 
     Bunny.prototype.eat = function(food, eatRate) {
-        this.hunger -= eatRate;
         
         Animal.prototype.eat.call(this, food, eatRate);
     }
@@ -122,7 +120,7 @@ define(['js/animal.js', 'js/lib/state-machine.min.js'], function(Animal, StateMa
 
 
     Bunny.prototype.cripple = function() {
-        this.dna.moveSpeed = 1000;
+        this.dna.moveSpeed = 0;
     }
 
     Bunny.prototype.getEaten = function(amount) {

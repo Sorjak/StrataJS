@@ -124,6 +124,7 @@ define(['js/moving_object.js'], function(MovingObject) {
     Animal.prototype.eat = function(food, eatRate) {
         food.getEaten(eatRate);
         this.growth += this.dna.growthRate * (this.health / this.dna.maxHealth);
+        this.hunger -= this.dna.hungerRate * 5;
         // this.health = this.health + eatRate > this.dna.maxHealth ?
         //                   this.health : 
         //                   this.health + eatRate;
