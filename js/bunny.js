@@ -19,40 +19,35 @@ define(['js/animal.js', 'js/lib/state-machine.min.js'], function(Animal, StateMa
             this.dna.moveSpeed = 1.5;
 
             this.dna.visionRadius = 10; //in tile lengths
-            this.dna.visionFrequency = 90;
+            this.dna.visionFrequency = 10;
 
             this.dna.eatSpeed = .3;
 
             this.dna.growthRate = .15;
-            this.dna.growthThreshold = 100;
-
-            this.dna.hungerRate = .1;
-            this.dna.hungerThreshold = 100;
+            this.dna.growthThreshold = 130;
         }
         
 
+
         this.health = this.dna.maxHealth;
-        this.fsm = this.initStateMachine();
     };
 
     Bunny.prototype = Object.create(Animal.prototype);
     Bunny.prototype.constructor = Bunny;
-
-    Bunny.prototype.initStateMachine = function() {
-        return StateMachine.create({
-            initial: 'foraging',
-            events: [
-                { name: 'foundFood',  from: 'foraging',  to: 'movingToEat'},
-                { name: 'beginEating',  from: 'movingToEat',  to: 'eating'},
-                { name: 'pathBlocked',  from: 'movingToEat',  to: 'foraging'},
-                { name: 'finishFood', from: 'eating', to: 'foraging'},
-            ]
-        });
-    };
  
     // OVERRIDES
 
+    Bunny.prototype.initStateMachine = function() {
+        this.events.push(
+            { name: 'getHungry', from: 'idle', to: 'foraging'},
+            { name: 'foundFood',  from: 'foraging',  to: 'movingToEat'}
+        );
+
+        return Animal.prototype.initStateMachine.call(this);
+    }
+
     Bunny.prototype.update = function(deltaTime) {
+
         if (this.fsm.is('foraging')) {
             this.foodTarget = null;
             this.foodPosition = null;
@@ -75,19 +70,6 @@ define(['js/animal.js', 'js/lib/state-machine.min.js'], function(Animal, StateMa
             }
         }
 
-        if (this.fsm.is('eating')) {
-
-            if (this.foodTarget.health > 0) {
-                this.eat(this.foodTarget, this.dna.eatSpeed * deltaTime);
-
-            } else {
-                this.foodTarget = null
-                this.foodPosition = null;
-
-                this.fsm.finishFood();
-            }
-        }
-
         Animal.prototype.update.call(this, deltaTime);
     };
 
@@ -103,21 +85,25 @@ define(['js/animal.js', 'js/lib/state-machine.min.js'], function(Animal, StateMa
         Animal.prototype.onDown.call(this);
     };
 
-    Bunny.prototype.eat = function(food, eatRate) {
-        
-        Animal.prototype.eat.call(this, food, eatRate);
+    Bunny.prototype.getStats = function() {
+        var message = "I have " + this.children.length + " children";
+
+        return Animal.prototype.getStats.call(this) + message;
     }
 
-    Bunny.prototype.getStats = function() {
-        var message = "this is a bunny";
+    Bunny.prototype.createChild = function(tile, energy) {
+        var child = new Bunny( tile, this.container, this.mutate(this.dna) );
+        child.energy = energy * .25;
 
-        return Animal.prototype.getStats.call(this) + " " + message;
+        game.addObject(child);
+        this.children.push(child);
+
+        Animal.prototype.createChild.call(this, tile, energy);
+
     }
 
 
     // PUBLIC METHODS
-
-
 
     Bunny.prototype.cripple = function() {
         this.dna.moveSpeed = 0;
@@ -128,8 +114,7 @@ define(['js/animal.js', 'js/lib/state-machine.min.js'], function(Animal, StateMa
     }
 
 
-    
-    // PRIVATE METHODS\
+    // PRIVATE METHODS
 
     Bunny.prototype.forage = function(deltaTime) {
         if (this.visionTimer < this.dna.visionFrequency) {
@@ -154,27 +139,7 @@ define(['js/animal.js', 'js/lib/state-machine.min.js'], function(Animal, StateMa
 
     }
 
-    Bunny.prototype.birth = function() {
-        var neighbors = this.currentTile.getNeighbors(true);
 
-        var birthTile = null;
-
-        for (var i = neighbors.length - 1; i >= 0; i--) {
-            var tile = neighbors[i];
-            if (tile.weight > 0) {
-                birthTile = tile;
-                break;
-            }
-        };
-
-        if (birthTile != null) {
-            var child = new Bunny( birthTile, this.container, this.mutate(this.dna) );
-            game.addObject(child);
-        }
-
-        Animal.prototype.birth.call(this);
-
-    }
 
     return Bunny;
 });

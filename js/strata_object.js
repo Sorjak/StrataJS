@@ -8,10 +8,12 @@ define(['js/lib/vector2.js'], function(Vector2) {
 
         this.dna = {
             maxHealth : 100,
-            //deathRate : .15
         };
 
-        this.deathRate = .1;
+        this.startEnergy = 100;
+        this.health = this.dna.maxHealth;
+        this.energy = this.startEnergy;
+        this.baseDeathRate = .01;
 
         this.initSprite(new PIXI.Point(tile.position.x, tile.position.y), path);
         this.rotation = this.sprite.rotation;
@@ -40,13 +42,33 @@ define(['js/lib/vector2.js'], function(Vector2) {
     }
 
     StrataObject.prototype.draw = function() {
-
+        if (game.statObject == this) {
+            game.graphics.lineStyle (1, 0xFF0000, 1);
+            game.graphics.drawRect(
+                this.sprite.position.x, 
+                this.sprite.position.y, 
+                this.sprite.width,
+                this.sprite.height
+            );
+        }
     }
     
     StrataObject.prototype.update = function(deltaTime) {
 
-        //this.health -= this.dna.deathRate;
-        this.health -= this.deathRate;
+        if (this.energy <= this.startEnergy) {
+            var t =  1 - (this.energy / this.startEnergy);
+            var deathRate = this.cubicBezier(
+                new Vector2(0, this.baseDeathRate),
+                new Vector2(1.04, .024),
+                new Vector2(.985, -.08),
+                new Vector2(1, .5),
+                t
+            );
+            this.health -= deathRate.y;
+        } else {
+            this.health -= this.baseDeathRate;
+        }
+
         if (this.health <= 0) {
             this.die();
         }
@@ -61,6 +83,7 @@ define(['js/lib/vector2.js'], function(Vector2) {
     StrataObject.prototype.moveToTile = function(tile) {
         this.currentTile.exit(this);
         tile.enter(this);
+        this.energy = Math.max(this.energy - tile.weight, 0);
 
         this.currentTile = tile;
 
@@ -89,10 +112,9 @@ define(['js/lib/vector2.js'], function(Vector2) {
     }
 
     StrataObject.prototype.die = function() {
+        this.currentTile.exit(this);
         game.removeObject(this);
         this.container.removeChild(this.sprite);
-
-        this.currentTile.exit(this);
     }
 
 
@@ -104,11 +126,26 @@ define(['js/lib/vector2.js'], function(Vector2) {
 
     StrataObject.prototype.getStats = function() {
         var message = "id: " + this.id + 
-        " | tile index: (" + 
+        " | tile: (" + 
             Math.floor(this.currentTile.index.x) + "," + Math.floor(this.currentTile.index.y) 
-        + ") | Health: " + Math.round(this.health) ;
+        + ") | Health: " + Math.round(this.health) + " | Energy: " + Math.round(this.energy);
 
         return message;
+    };
+
+    StrataObject.prototype.cubicBezier = function(p0, p1, p2, p3, t) {
+        var u = (1 - t);
+        var tt = t*t;
+        var uu = u*u;
+        var uuu = uu * u;
+        var ttt = tt * t;
+
+        var p = p0.multiplyScalar(uuu).clone();
+        p.add( p1.multiplyScalar(3 * uu * t) ); //second term
+        p.add( p2.multiplyScalar(3 * u * tt) ); //third term
+        p.add( p3.multiplyScalar(ttt) ); //fourth term
+
+        return p;
     };
 
     return StrataObject;

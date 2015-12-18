@@ -24,45 +24,31 @@ define(['js/animal.js', 'js/lib/state-machine.min.js'], function(Animal, StateMa
             this.dna.eatSpeed = .5;
 
             this.dna.growthRate = .3;
-            this.dna.growthThreshold = 100;
+            this.dna.growthThreshold = 140;
 
-            this.dna.hungerRate = .05;
-            this.dna.hungerThreshold = 100;
         }
         
 
         this.health = this.dna.maxHealth;
-        this.fsm = this.initStateMachine();
     };
 
     Wolf.prototype = Object.create(Animal.prototype);
     Wolf.prototype.constructor = Wolf;
-
-    Wolf.prototype.initStateMachine = function() {
-        return StateMachine.create({
-            initial: 'idle',
-            events: [
-                { name: 'getHungry',  from: 'idle',  to: 'hunting'},
-                { name: 'foundFood',  from: 'hunting',  to: 'movingToKill'},
-                { name: 'beginEating',  from: 'movingToKill',  to: 'eating'},
-                { name: 'pathBlocked',  from: 'movingToKill',  to: 'hunting'},
-                { name: 'finishFood', from: 'eating', to: 'idle'},
-            ]
-        });
-    };
  
     // OVERRIDES
 
+    Wolf.prototype.initStateMachine = function() {
+        this.events.push(
+            { name: 'getHungry',  from: 'idle',  to: 'hunting'},
+            { name: 'foundFood',  from: 'hunting',  to: 'movingToKill'},
+            { name: 'beginEating',  from: 'movingToKill',  to: 'eating'}, 
+            { name: 'pathBlocked',  from: 'movingToKill',  to: 'hunting'}
+        );
+
+        return Animal.prototype.initStateMachine.call(this);
+    }
+
     Wolf.prototype.update = function(deltaTime) {
-        if (this.fsm.is('idle')) {
-            this.foodTarget = null;
-            this.foodPosition = null;
-
-            if (this.hunger > this.dna.hungerThreshold * .75) {
-                this.fsm.getHungry();
-            }
-
-        }
 
         if (this.fsm.is('hunting')) {
             this.foodTarget = null;
@@ -88,20 +74,6 @@ define(['js/animal.js', 'js/lib/state-machine.min.js'], function(Animal, StateMa
             } 
         }
 
-        if (this.fsm.is('eating')) {
-
-            if (this.foodTarget.health > 0) {
-                this.eat(this.foodTarget, this.dna.eatSpeed * deltaTime);
-
-            } else {
-                this.foodTarget = null
-                this.foodPosition = null;
-
-
-                this.fsm.finishFood();
-            }
-        }
-
         Animal.prototype.update.call(this, deltaTime);
     };
 
@@ -123,9 +95,20 @@ define(['js/animal.js', 'js/lib/state-machine.min.js'], function(Animal, StateMa
     }
 
     Wolf.prototype.getStats = function() {
-        var message = "this is a wolf";
+        var message = "I have " + this.children.length + " children";
 
-        return Animal.prototype.getStats.call(this) + " " + message;
+        return Animal.prototype.getStats.call(this) + message;
+    }
+
+    Wolf.prototype.createChild = function(tile, energy) {
+        var child = new Wolf( tile, this.container, this.mutate(this.dna) );
+        child.energy = energy * .25;
+
+        game.addObject(child);
+        this.children.push(child);
+
+        Animal.prototype.createChild.call(this, tile, energy);
+
     }
 
 
@@ -134,7 +117,7 @@ define(['js/animal.js', 'js/lib/state-machine.min.js'], function(Animal, StateMa
 
 
     Wolf.prototype.cripple = function() {
-        this.dna.moveSpeed = 100;
+        this.dna.moveSpeed = 0;
     }
     
     // PRIVATE METHODS\
@@ -164,28 +147,6 @@ define(['js/animal.js', 'js/lib/state-machine.min.js'], function(Animal, StateMa
 
     }
 
-    Wolf.prototype.birth = function() {
-        var neighbors = this.currentTile.getNeighbors(true);
-
-        var birthTile = null;
-
-        for (var i = neighbors.length - 1; i >= 0; i--) {
-            var tile = neighbors[i];
-            if (tile.weight > 0) {
-                birthTile = tile;
-                break;
-            }
-        };
-
-        if (birthTile != null) {
-            var child = new Wolf( birthTile, this.container, this.mutate(this.dna) );
-            console.log(child.dna);
-            game.addObject(child);
-        }
-
-        Animal.prototype.birth.call(this);
-
-    }
 
     return Wolf;
 });

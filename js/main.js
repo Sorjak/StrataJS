@@ -64,6 +64,7 @@ requirejs(["js/lib/pixi/bin/pixi.js"], function(pixi) {
             STAGE.addChild(FIRST_LAYER);
             STAGE.addChild(SECOND_LAYER);
             STAGE.addChild(THIRD_LAYER);
+            STAGE.addChild(game.graphics);
 
             camera = new Camera(STAGE);
             

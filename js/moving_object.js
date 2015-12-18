@@ -92,7 +92,7 @@ define(['js/strata_object.js'], function(StrataObject) {
     // PRIVATE METHODS 
 
     MovingObject.prototype.lerpPoint = function(from, to, time) {
-        output = new PIXI.Point();
+        var output = new PIXI.Point();
         output.x = from.x + (to.x - from.x) * time;  
         output.y = from.y + (to.y - from.y) * time;  
 

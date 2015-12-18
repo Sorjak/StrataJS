@@ -43,6 +43,7 @@ define(["js/strata_world.js", "js/bunny.js", "js/wolf.js", "js/flower.js", "js/t
         };
         
         this.astar = new Astar(this.world.tiles);
+        this.graphics = new PIXI.Graphics();
         
     };
 
@@ -60,6 +61,7 @@ define(["js/strata_world.js", "js/bunny.js", "js/wolf.js", "js/flower.js", "js/t
     }
 
     StrataGame.prototype.draw = function() {
+        this.graphics.clear();
         this.entities.forEach(function(entity) {
             entity.draw();
         });

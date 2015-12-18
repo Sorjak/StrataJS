@@ -15,10 +15,8 @@ define(['js/strata_object.js'], function(StrataObject) {
             this.dna = dna;
 
         } else {
-            this.dna.maxHealth = 120;
-            this.dna.growthRate = .4;
-
-            // this.dna.maxNeighbors = 2;
+            this.dna.maxHealth = 100;
+            this.dna.growthRate = .2;
             this.dna.growthThreshold = 100;
         }
 
@@ -31,7 +29,11 @@ define(['js/strata_object.js'], function(StrataObject) {
     // OVERRIDES
 
     Flower.prototype.update = function(deltaTime) {
-        this.grow(deltaTime);
+        if (this.energy > this.dna.growthThreshold) {
+            this.grow(deltaTime);
+        } else {
+            this.energy += Math.random() * this.dna.growthRate * deltaTime;
+        }
 
         StrataObject.prototype.update.call(this, deltaTime);
     };
@@ -67,8 +69,11 @@ define(['js/strata_object.js'], function(StrataObject) {
         this.growth += Math.random() * this.dna.growthRate * deltaTime;
         if (this.growth > this.dna.growthThreshold) {
             this.growth = 0;
+            this.energy = this.energy * .25;
             this.spawn();
         }
+
+
     };
     
     Flower.prototype.spawn = function() {
