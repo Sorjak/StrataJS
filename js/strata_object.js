@@ -7,13 +7,23 @@ define(['js/lib/vector2.js'], function(Vector2) {
         this.container = container;
 
         this.dna = {
-            maxHealth : 100,
+            max_health      : 100,
+            max_energy      : 100,
+            death_threshold : 100,
+            metabolism      : 0.1,
+            sex_drive       : 0.1,
+            fatigue_rate    : 0.1
         };
 
-        this.startEnergy = 100;
-        this.health = this.dna.maxHealth;
-        this.energy = this.startEnergy;
-        this.baseDeathRate = .01;
+        this.health = this.dna.max_health;
+        this.energy = this.dna.max_energy;
+
+        this.age = 0;
+        this.check_age_time = 10; // check every ten seconds
+        this.check_age_timer = 0;
+
+        this.fatigue    = 0;
+        this.desire     = 0;
 
         this.initSprite(new PIXI.Point(tile.position.x, tile.position.y), path);
         this.rotation = this.sprite.rotation;
@@ -55,19 +65,26 @@ define(['js/lib/vector2.js'], function(Vector2) {
     
     StrataObject.prototype.update = function(deltaTime) {
 
-        if (this.energy <= this.startEnergy) {
-            var t =  1 - (this.energy / this.startEnergy);
-            var deathRate = this.cubicBezier(
-                new Vector2(0, this.baseDeathRate),
-                new Vector2(1.04, .024),
-                new Vector2(.985, -.08),
-                new Vector2(1, .5),
-                t
-            );
-            this.health -= deathRate.y;
-        } else {
-            this.health -= this.baseDeathRate;
-        }
+        // if (this.energy <= this.startEnergy) {
+        //     var t =  1 - (this.energy / this.startEnergy);
+        //     var deathRate = this.cubicBezier(
+        //         new Vector2(0, this.baseDeathRate),
+        //         new Vector2(1.04, .024),
+        //         new Vector2(.985, -.08),
+        //         new Vector2(1, .5),
+        //         t
+        //     );
+        //     this.health -= deathRate.y;
+        // } else {
+        //     this.health -= this.baseDeathRate;
+        // }
+
+        this.age     += .003;
+        this.energy  = Math.max(this.energy - this.dna.metabolism, 0);
+        this.fatigue = Math.min(this.fatigue + this.dna.fatigue_rate, 100);
+        this.desire  = Math.min(this.desire + this.dna.sex_drive, 100);
+
+        this.checkOldAge(deltaTime);
 
         if (this.health <= 0) {
             this.die();
@@ -78,12 +95,13 @@ define(['js/lib/vector2.js'], function(Vector2) {
 
     StrataObject.prototype.onDown = function() {
         game.showStatsFor(this.id);
+        console.log(this);
     }
 
     StrataObject.prototype.moveToTile = function(tile) {
         this.currentTile.exit(this);
         tile.enter(this);
-        this.energy = Math.max(this.energy - tile.weight, 0);
+        // this.energy = Math.max(this.energy - tile.weight, 0);
 
         this.currentTile = tile;
 
@@ -111,6 +129,21 @@ define(['js/lib/vector2.js'], function(Vector2) {
         return new_dna;
     }
 
+    StrataObject.prototype.checkOldAge = function(deltaTime) {
+        if (this.check_age_timer > this.check_age_time) {
+
+            if (this.age > this.dna.death_threshold) {
+                var num = Math.random();
+
+                if (num < .20) {
+                    this.die();
+                }
+            }
+        } else {
+            this.check_age_timer += deltaTime;
+        }
+    }
+
     StrataObject.prototype.die = function() {
         this.currentTile.exit(this);
         game.removeObject(this);
@@ -128,7 +161,7 @@ define(['js/lib/vector2.js'], function(Vector2) {
         var message = "id: " + this.id + 
         " | tile: (" + 
             Math.floor(this.currentTile.index.x) + "," + Math.floor(this.currentTile.index.y) 
-        + ") | Health: " + Math.round(this.health) + " | Energy: " + Math.round(this.energy);
+        + ") | Age: " + Math.round(this.age) + " | Energy: " + Math.round(this.energy);
 
         return message;
     };

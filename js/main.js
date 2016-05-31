@@ -9,7 +9,7 @@ var game;
 var camera;
 
 var current_id = 0;
-var TILE_SIZE = 48;
+var TILE_SIZE = 16;
 
 var fpsCounter = document.getElementById("fps");
 
@@ -53,6 +53,7 @@ requirejs(["js/lib/pixi/bin/pixi.js"], function(pixi) {
         var loader = PIXI.loader; 
         loader.add('grass',"resources/grass.jpg");
         loader.add('mountain',"resources/mountain.png");
+        loader.add('terrain_white_square', "resources/terrain/terrain_white_square_sheet.png");
 
         loader.once('complete', function() {
             game = new StrataGame();

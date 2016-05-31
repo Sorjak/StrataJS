@@ -2,8 +2,9 @@ define(['js/lib/binary_heap.js'], function(BinaryHeap) {
     /*
      * @class Astar
      */
-    Astar = function(grid) {
-        this.grid = grid;
+    Astar = function(world) {
+        this.world = world;
+        this.grid = world.tiles;
     };
     
     Astar.prototype.search = function(start, end, ignoreType) {

@@ -1,4 +1,4 @@
-define(["js/strata_world.js", "js/bunny.js", "js/wolf.js", "js/flower.js", "js/tile.js", "js/lib/astar.js"], 
+define(["js/terrain/strata_world.js", "js/entities/bunny.js", "js/entities/wolf.js", "js/entities/flower.js", "js/terrain/tile.js", "js/lib/astar.js"], 
         function(StrataWorld, Bunny, Wolf, Flower, Tile, Astar) {
         
     StrataGame = function()
@@ -42,7 +42,7 @@ define(["js/strata_world.js", "js/bunny.js", "js/wolf.js", "js/flower.js", "js/t
             this.addObject(flower);
         };
         
-        this.astar = new Astar(this.world.tiles);
+        this.astar = new Astar(this.world);
         this.graphics = new PIXI.Graphics();
         
     };

@@ -77,7 +77,7 @@ define(['js/strata_object.js'], function(StrataObject) {
     };
     
     Flower.prototype.spawn = function() {
-        var neighbors = this.currentTile.getNeighbors(false);
+        var neighbors = this.game.world.getNeighborsForTile(this.currentTile, false);
         var canSpawn = 0;
 
         neighbors.forEach(function(tile) {

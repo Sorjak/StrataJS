@@ -2,32 +2,40 @@
 define(function() {
     "use strict";
     
-    function Tile(hindex, vindex, container) {
+    function Tile(hindex, vindex, height, container) {
         this.position = new Vector2(hindex * TILE_SIZE, vindex * TILE_SIZE);
         this.index = new Vector2(hindex, vindex);
         this.container = container;
         
-        var ran = Math.random() * 10;
-        this.weight = ran > .3 ? 1 : 0;
-        
-        this.graphics = new PIXI.Graphics();
-
+        this.height = height;
+        this.weight = Math.floor((this.height * 100) / 25);        
         this.occupants = new Set();
 
         this.initSprite();
 
-        // var text = new PIXI.Text(""+this.index.y,{font : '12px Arial', fill : 0xff1010, align : 'center'});
-        // text.x = this.position.x;
-        // text.y = this.position.y;
-        // TILES_CONTAINER.addChild(text);
+        this.graphics = new PIXI.Graphics();
+
+        var backgroundColor = 0xFFFFFF;
+        if (this.height <= .1) {
+            backgroundColor = 0x3C5C91;
+        } else {
+            backgroundColor = 0x688358;
+        }
+
+        this.graphics.beginFill(backgroundColor);
+        this.graphics.drawRect(0, 0, TILE_SIZE, TILE_SIZE);
+
+        this.sprite.addChild(this.graphics);
     };
 
     Tile.prototype.initSprite = function() {
-        if (this.weight == 1){
-            this.sprite = new PIXI.Sprite.fromImage("resources/grass.jpg");
-        } else {
-            this.sprite = new PIXI.Sprite.fromImage("resources/mountain.png");
-        }
+        // if (this.height == 1){
+        //     this.sprite = new PIXI.Sprite.fromImage("resources/grass.jpg");
+        // } else {
+        //     this.sprite = new PIXI.Sprite.fromImage("resources/mountain.png");
+        // }
+
+        this.sprite = new PIXI.Container();
         this.sprite.height = TILE_SIZE; 
         this.sprite.width = TILE_SIZE;
         
@@ -84,8 +92,6 @@ define(function() {
         this.graphics.lineStyle(1, 0xFF0000, 1);
         
         this.graphics.drawRect(this.position.x , this.position.y, TILE_SIZE, TILE_SIZE);
-
-        TILES_CONTAINER.addChild(this.graphics);
     };
 
     Tile.prototype.distanceTo = function(other) {
@@ -104,58 +110,6 @@ define(function() {
         var dx = this.position.x - v.x; 
         var dy = this.position.y - v.y;
         return Math.sqrt(dx * dx + dy * dy);
-    }
-
-
-    Tile.prototype.getNeighbors = function(diagonal) {
-        var x = this.index.x;
-        var y = this.index.y;
-        var output = [];
-        
-        //west
-        if (game.world.tiles[x-1] && game.world.tiles[x-1][y]) {
-            output.push(game.world.tiles[x-1][y]);
-        }
-        
-        //north
-        if (game.world.tiles[x] && game.world.tiles[x][y-1]) {
-            output.push(game.world.tiles[x][y-1]);
-        }
-        
-        //east
-        if (game.world.tiles[x+1] && game.world.tiles[x+1][y]) {
-            output.push(game.world.tiles[x+1][y]);
-        }
-        
-        //south
-        if (game.world.tiles[x] && game.world.tiles[x][y+1]) {
-            output.push(game.world.tiles[x][y+1]);
-        }
-        
-
-        if (diagonal) {
-            //northwest
-            if (game.world.tiles[x-1] && game.world.tiles[x-1][y-1]) {
-                output.push(game.world.tiles[x-1][y-1]);
-            }
-            
-            //northeast
-            if (game.world.tiles[x+1] && game.world.tiles[x+1][y+1]) {
-                output.push(game.world.tiles[x+1][y+1]);
-            }
-            
-            //southwest
-            if (game.world.tiles[x-1] && game.world.tiles[x-1][y+1]) {
-                output.push(game.world.tiles[x-1][y+1]);
-            }
-            
-            //southeast
-            if (game.world.tiles[x+1] && game.world.tiles[x+1][y-1]) {
-                output.push(game.world.tiles[x+1][y-1]);
-            }
-        }
-
-        return output;
     }
 
     return Tile;
