@@ -1,3 +1,4 @@
 stratajs.sublime-project
 stratajs.sublime-workspace
 node_modules/*
+generated/*
