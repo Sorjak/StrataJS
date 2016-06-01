@@ -35,26 +35,12 @@ define(['js/terrain/tile.js', 'js/lib/perlin.js', 'js/lib/vector2.js'], function
         return output;
     }
 
-
-    StrataWorld.prototype.generateTiles = function() {
-        this.tiles = this.generateChunk(this.width, this.height);
-
-        // this.chunks[0] = [this.tiles];
-
-        for (var i = 0; i < this.width - 1; i++) {
-            for (var j = 0; j < this.height; j++) {
-                var tile = this.tiles[i][j];
-                this.processTile(tile);
-                // TILES_CONTAINER.addChild(tile.sprite);
-            }
-        }
-    };
-
     StrataWorld.prototype.generateChunk = function(width, height) {
         var outputTiles = [];
 
         for (var i = 0; i < width - 1; i++) {
             outputTiles[i] = [];
+
             for (var j = 0; j < height; j++) {
                 var perlin_height = (noise_module.perlin2(i / 100, j / 100) + 1) / 2;
                 var tile = new Tile( i, j, perlin_height, TILES_CONTAINER);
@@ -66,38 +52,48 @@ define(['js/terrain/tile.js', 'js/lib/perlin.js', 'js/lib/vector2.js'], function
         return outputTiles;
     }
 
-    StrataWorld.prototype.processTile = function(tile) {
-        var newSprite = null;
-        if (tile.height > .6) {
-            var ren = this.sprites['center'].generateTexture(RENDERER);
-            newSprite = new PIXI.Sprite(ren)
-            
-        } else {
 
-            var neighbors = this.getNeighborsForTile(tile, true);
-            var qualifying = this.getNeighborsAboveValue(neighbors, .6);
-            var left = right = up = down = false;
+    StrataWorld.prototype.generateTiles = function() {
+        this.tiles = this.generateChunk(this.width, this.height);
 
-            qualifying.forEach(function(t) {
-                console.log("got a side");
-                if (t.index.x + 1 == tile.index.x) left = true;
-                else if (t.index.x - 1 == tile.index.x) right = true;
+        // this.chunks[0] = [this.tiles];
 
-                if (t.index.y + 1 == tile.index.y) up = true;
-                else if (t.index.y - 1 == tile.index.y) down = true;
-            });
-
-            if ((left || right) && !(up || down)) {
-
-                var ren = this.sprites['side'].generateTexture(RENDERER);
-                newSprite = new PIXI.Sprite(ren);
-                if (left) newSprite.rotation = 90;
-                else newSprite.rotation = 270;
+        for (var i = 0; i < this.width - 1; i++) {
+            for (var j = 0; j < this.height; j++) {
+                var tile = this.tiles[i][j];
+                this.firstPass(tile);
+                // TILES_CONTAINER.addChild(tile.sprite);
             }
         }
 
-        if (newSprite != null)
+    };
+
+    StrataWorld.prototype.firstPass = function(tile) {
+        var newSprite = null;
+        if (tile.height > .6) {
+            newSprite = this.getOverlaySprite('center', 0);
+            
+        } else {
+
+            var neighbors = this.getNeighborsForTile(tile, false);
+            var qualifying = this.getNeighborsAboveValue(neighbors, .6);
+            var left = right = up = down = false;
+
+            if ((left || right) && !(up || down)) {
+                if (left) newSprite = this.getOverlaySprite('side', 90);
+                else newSprite = this.getOverlaySprite('side', 270);
+            }
+            if (!(left || right) && (up || down)) {
+                if (up) newSprite = this.getOverlaySprite('side', 180);
+            }
+            if (left && up)
+                newSprite = this.getOverlaySprite('')
+        }
+
+        if (newSprite != null) {
+            newSprite.tint = 0x688358;
             tile.sprite.addChild(newSprite);
+        }
     }
 
     StrataWorld.prototype.getNeighborsAboveValue = function(neighbors, value) {
@@ -172,6 +168,32 @@ define(['js/terrain/tile.js', 'js/lib/perlin.js', 'js/lib/vector2.js'], function
                 output.push(this.tiles[x+1][y-1]);
             }
         }
+
+        return output;
+    }
+
+    StrataWorld.prototype.getNeighborBitmask = function(neighbors) {
+        // left = 1
+        // top = 2
+        // right = 4
+        // down = 8
+
+        var bitmask = 0;
+        neighbors.forEach(function(t) {
+            if (t.index.x + 1 == tile.index.x) bitmask |= 1;
+            else if (t.index.x - 1 == tile.index.x) bitmask |= 4;
+
+            if (t.index.y + 1 == tile.index.y) bitmask != 2;
+            else if (t.index.y - 1 == tile.index.y) bitmask |= 8;
+        });
+    }
+
+    StrataWorld.prototype.getOverlaySprite = function(index, rotation) {
+        var ren = this.sprites[index].generateTexture(RENDERER);
+        output = new PIXI.Sprite(ren);
+        output.anchor = new PIXI.Point(.5, .5);
+        output.position = new PIXI.Point(8, 8);
+        output.rotation = rotation * (Math.PI / 180);
 
         return output;
     }

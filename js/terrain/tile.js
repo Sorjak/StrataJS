@@ -15,12 +15,12 @@ define(function() {
 
         this.graphics = new PIXI.Graphics();
 
-        var backgroundColor = 0xFFFFFF;
-        if (this.height <= .1) {
-            backgroundColor = 0x3C5C91;
-        } else {
-            backgroundColor = 0x688358;
-        }
+        // var backgroundColor = 0xFFFFFF;
+        // if (this.height <= .1) {
+        var backgroundColor = 0x3C5C91;
+        // } else {
+        //     backgroundColor = 0x688358;
+        // }
 
         this.graphics.beginFill(backgroundColor);
         this.graphics.drawRect(0, 0, TILE_SIZE, TILE_SIZE);
@@ -29,12 +29,6 @@ define(function() {
     };
 
     Tile.prototype.initSprite = function() {
-        // if (this.height == 1){
-        //     this.sprite = new PIXI.Sprite.fromImage("resources/grass.jpg");
-        // } else {
-        //     this.sprite = new PIXI.Sprite.fromImage("resources/mountain.png");
-        // }
-
         this.sprite = new PIXI.Container();
         this.sprite.height = TILE_SIZE; 
         this.sprite.width = TILE_SIZE;
