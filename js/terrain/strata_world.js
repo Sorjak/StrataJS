@@ -1,4 +1,15 @@
 define(['js/terrain/tile.js', 'js/lib/perlin.js', 'js/lib/vector2.js'], function(Tile, noise_module, Vector2) {
+
+    var TILE_POSITION = {
+            left:       1,
+            up:         2,
+            right:      4,
+            down:       8,
+            upleft:     16,
+            upright:    32,
+            downleft:   64,
+            downright:  128
+    };
     
     function StrataWorld(width, height) {
         this.width = width;
@@ -13,12 +24,27 @@ define(['js/terrain/tile.js', 'js/lib/perlin.js', 'js/lib/vector2.js'], function
 
         var spritesheet = PIXI.Texture.fromImage("resources/generated/white_rough.png");
 
+        // this.sprites = {
+        //     'center' : this.createSprite(spritesheet, 0, 0 * 16),
+        //     'side'   : this.createSprite(spritesheet, 0, 1 * 16),
+        //     'corner_inner' : this.createSprite(spritesheet, 0, 2 * 16),
+        //     'corner_outer' : this.createSprite(spritesheet, 0, 3 * 16)
+        // };
+
         this.sprites = {
-            'center' : this.createSprite(spritesheet, 0, 0 * 16),
-            'side'   : this.createSprite(spritesheet, 0, 1 * 16),
-            'corner_inner' : this.createSprite(spritesheet, 0, 2 * 16),
-            'corner_outer' : this.createSprite(spritesheet, 0, 3 * 16)
+            'center' : [],
+            'side'   : [],
+            'corner_inner' : [],
+            'corner_outer' : []
         };
+
+        for (var i = 0; i < (spritesheet.width / this.tile_size); i++) {
+
+            this.sprites['center'].push(this.createSprite(spritesheet, i * 16, 0 * 16));
+            this.sprites['side'].push(this.createSprite(spritesheet, i * 16, 1 * 16));
+            this.sprites['corner_inner'].push(this.createSprite(spritesheet, i * 16, 2 * 16));
+            this.sprites['corner_outer'].push(this.createSprite(spritesheet, i * 16, 3 * 16));
+        }
 
         // TILES_CONTAINER.addChild(new PIXI.Sprite(spritesheet));
     };
@@ -56,38 +82,39 @@ define(['js/terrain/tile.js', 'js/lib/perlin.js', 'js/lib/vector2.js'], function
     StrataWorld.prototype.generateTiles = function() {
         this.tiles = this.generateChunk(this.width, this.height);
 
-        // this.chunks[0] = [this.tiles];
-
         for (var i = 0; i < this.width - 1; i++) {
             for (var j = 0; j < this.height; j++) {
                 var tile = this.tiles[i][j];
                 this.firstPass(tile);
-                // TILES_CONTAINER.addChild(tile.sprite);
             }
         }
-
     };
 
     StrataWorld.prototype.firstPass = function(tile) {
         var newSprite = null;
-        if (tile.height > .6) {
+        if (tile.height > .5) {
             newSprite = this.getOverlaySprite('center', 0);
+            tile.fertile = true;
             
         } else {
 
             var neighbors = this.getNeighborsForTile(tile, false);
-            var qualifying = this.getNeighborsAboveValue(neighbors, .6);
-            var left = right = up = down = false;
+            var qualifying = this.getNeighborsAboveValue(neighbors, .5);
+            var bm = this.getNeighborBitmask(tile, qualifying);
 
-            if ((left || right) && !(up || down)) {
-                if (left) newSprite = this.getOverlaySprite('side', 90);
-                else newSprite = this.getOverlaySprite('side', 270);
-            }
-            if (!(left || right) && (up || down)) {
-                if (up) newSprite = this.getOverlaySprite('side', 180);
-            }
-            if (left && up)
-                newSprite = this.getOverlaySprite('')
+            if      (bm == TILE_POSITION.left) newSprite        = this.getOverlaySprite('side', 90);
+            else if (bm == TILE_POSITION.right) newSprite       = this.getOverlaySprite('side', 270);
+            else if (bm == TILE_POSITION.up) newSprite          = this.getOverlaySprite('side', 180);
+            else if (bm == TILE_POSITION.down) newSprite        = this.getOverlaySprite('side', 0);
+            else if (bm == TILE_POSITION.upleft) newSprite      = this.getOverlaySprite('corner_outer', 0);
+            else if (bm == TILE_POSITION.upright) newSprite     = this.getOverlaySprite('corner_outer', 90);
+            else if (bm == TILE_POSITION.downleft) newSprite    = this.getOverlaySprite('corner_outer', 270);
+            else if (bm == TILE_POSITION.downright) newSprite   = this.getOverlaySprite('corner_outer', 180);
+            else if (bm == TILE_POSITION.left + TILE_POSITION.up) newSprite     = this.getOverlaySprite('corner_inner', 180);
+            else if (bm == TILE_POSITION.left + TILE_POSITION.down) newSprite   = this.getOverlaySprite('corner_inner', 90);
+            else if (bm == TILE_POSITION.right + TILE_POSITION.up) newSprite    = this.getOverlaySprite('corner_inner', 270);
+            else if (bm == TILE_POSITION.right + TILE_POSITION.down) newSprite  = this.getOverlaySprite('corner_inner', 0);
+
         }
 
         if (newSprite != null) {
@@ -172,24 +199,30 @@ define(['js/terrain/tile.js', 'js/lib/perlin.js', 'js/lib/vector2.js'], function
         return output;
     }
 
-    StrataWorld.prototype.getNeighborBitmask = function(neighbors) {
-        // left = 1
-        // top = 2
-        // right = 4
-        // down = 8
-
+    StrataWorld.prototype.getNeighborBitmask = function(tile, neighbors) {
         var bitmask = 0;
         neighbors.forEach(function(t) {
-            if (t.index.x + 1 == tile.index.x) bitmask |= 1;
-            else if (t.index.x - 1 == tile.index.x) bitmask |= 4;
-
-            if (t.index.y + 1 == tile.index.y) bitmask != 2;
-            else if (t.index.y - 1 == tile.index.y) bitmask |= 8;
+            if (t.index.x + 1 == tile.index.x) {
+                if (t.index.y + 1 == tile.index.y) bitmask |= TILE_POSITION.upleft;
+                else if (t.index.y - 1 == tile.index.y) bitmask |= TILE_POSITION.downleft;
+                else bitmask |= TILE_POSITION.left;
+            } 
+            else if (t.index.x - 1 == tile.index.x){
+                if (t.index.y + 1 == tile.index.y) bitmask |= TILE_POSITION.upright;
+                else if (t.index.y - 1 == tile.index.y) bitmask |= TILE_POSITION.downright;
+                else bitmask |= TILE_POSITION.right;
+            } else {
+                if (t.index.y + 1 == tile.index.y) bitmask |= TILE_POSITION.up;
+                else if (t.index.y - 1 == tile.index.y) bitmask |= TILE_POSITION.down;
+            }
         });
+
+        return bitmask
     }
 
     StrataWorld.prototype.getOverlaySprite = function(index, rotation) {
-        var ren = this.sprites[index].generateTexture(RENDERER);
+        var sprite_index = Math.floor(Math.random() * this.sprites[index].length);
+        var ren = this.sprites[index][sprite_index].generateTexture(RENDERER);
         output = new PIXI.Sprite(ren);
         output.anchor = new PIXI.Point(.5, .5);
         output.position = new PIXI.Point(8, 8);

@@ -9,7 +9,7 @@ define(["js/terrain/strata_world.js", "js/entities/bunny.js", "js/entities/wolf.
         this.statObject = null;
         this.statConsole = document.getElementById("console-text");
 
-        this.world = new StrataWorld( 40, 40, TILE_SIZE);
+        this.world = new StrataWorld( 100, 100, TILE_SIZE);
         this.world.generateTiles();
 
         wolf = new Wolf( this.world.tiles[20][20], SECOND_LAYER );
@@ -29,18 +29,18 @@ define(["js/terrain/strata_world.js", "js/entities/bunny.js", "js/entities/wolf.
             this.addObject(bunny);
         };
 
-        for (var i = 15; i >= 0; i--) {
-            var ranTile = null;
+        // for (var i = 15; i >= 0; i--) {
+        //     var ranTile = null;
 
-            while (ranTile == null) {
-                ranTile = this.getRandomTile();
-                if (ranTile != null && ranTile.weight == 0)
-                    ranTile = null;
-            }
+        //     while (ranTile == null) {
+        //         ranTile = this.getRandomTile();
+        //         if (ranTile != null && !ranTile.fertile)
+        //             ranTile = null;
+        //     }
 
-            flower = new Flower( ranTile, FIRST_LAYER, "orange_flower.png" );
-            this.addObject(flower);
-        };
+        //     flower = new Flower( ranTile, FIRST_LAYER, "orange_flower.png" );
+        //     this.addObject(flower);
+        // };
         
         this.astar = new Astar(this.world);
         this.graphics = new PIXI.Graphics();

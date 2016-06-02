@@ -36,7 +36,7 @@ define(['js/lib/binary_heap.js'], function(BinaryHeap) {
             
             neighbors.forEach(function(neighbor) {
                 
-                if (neighbor.weight > 0 
+                if (neighbor.weight > 0  && neighbor.height > .5
                     && !closedSet.has(neighbor) 
                     && !neighbor.hasOccupantOfType(ignoreType) ) {
 

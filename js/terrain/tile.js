@@ -10,17 +10,15 @@ define(function() {
         this.height = height;
         this.weight = Math.floor((this.height * 100) / 25);        
         this.occupants = new Set();
+        this.fertile = false;
 
+
+        // DISPLAY STUFF 
         this.initSprite();
 
         this.graphics = new PIXI.Graphics();
 
-        // var backgroundColor = 0xFFFFFF;
-        // if (this.height <= .1) {
         var backgroundColor = 0x3C5C91;
-        // } else {
-        //     backgroundColor = 0x688358;
-        // }
 
         this.graphics.beginFill(backgroundColor);
         this.graphics.drawRect(0, 0, TILE_SIZE, TILE_SIZE);

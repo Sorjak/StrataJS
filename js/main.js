@@ -51,8 +51,6 @@ requirejs(["js/lib/pixi/bin/pixi.js"], function(pixi) {
         // Load static assets and create a render texture
 
         var loader = PIXI.loader; 
-        loader.add('grass',"resources/grass.jpg");
-        loader.add('mountain',"resources/mountain.png");
         loader.add('white_square', "resources/generated/white_square.png");
         loader.add('white_rough', "resources/generated/white_rough.png");
 
