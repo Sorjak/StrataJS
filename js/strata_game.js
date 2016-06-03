@@ -12,21 +12,11 @@ define(["js/terrain/strata_world.js", "js/entities/bunny.js", "js/entities/wolf.
         this.world = new StrataWorld( 100, 100, TILE_SIZE);
         this.world.generateTiles();
 
-        wolf = new Wolf( this.world.tiles[20][20], SECOND_LAYER );
-
-        this.addObject(wolf);
+        // wolf = new Wolf( this.world.tiles[20][20], SECOND_LAYER );
+        this.spawnEntity(Wolf);
 
         for (var i = 4; i >= 0; i--) {
-            var ranTile = null;
-
-            while (ranTile == null) {
-                ranTile = this.getRandomTile();
-                if (ranTile != null && ranTile.weight == 0)
-                    ranTile = null;
-            }
-
-            bunny = new Bunny( ranTile, SECOND_LAYER  );
-            this.addObject(bunny);
+            this.spawnEntity(Bunny);
         };
 
         // for (var i = 15; i >= 0; i--) {
@@ -113,6 +103,19 @@ define(["js/terrain/strata_world.js", "js/entities/bunny.js", "js/entities/wolf.
 
     // PRIVATE METHODS
 
+    StrataGame.prototype.spawnEntity = function(entity) {
+        var filtered = this.world.getTilesByTag('walkable');
+
+        if (filtered.length > 0) {
+            var ranIndex = Math.floor(Math.random() * (filtered.length - 1));
+            var e = new entity(filtered[ranIndex], SECOND_LAYER);
+            console.log(e);
+
+            this.addObject(e);
+        } else {
+            console.log("unable to spawn entitity");
+        }
+    }
 
     
     // constructor

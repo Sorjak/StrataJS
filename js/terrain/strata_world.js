@@ -24,13 +24,6 @@ define(['js/terrain/tile.js', 'js/lib/perlin.js', 'js/lib/vector2.js'], function
 
         var spritesheet = PIXI.Texture.fromImage("resources/generated/white_rough.png");
 
-        // this.sprites = {
-        //     'center' : this.createSprite(spritesheet, 0, 0 * 16),
-        //     'side'   : this.createSprite(spritesheet, 0, 1 * 16),
-        //     'corner_inner' : this.createSprite(spritesheet, 0, 2 * 16),
-        //     'corner_outer' : this.createSprite(spritesheet, 0, 3 * 16)
-        // };
-
         this.sprites = {
             'center' : [],
             'side'   : [],
@@ -45,6 +38,7 @@ define(['js/terrain/tile.js', 'js/lib/perlin.js', 'js/lib/vector2.js'], function
             this.sprites['corner_inner'].push(this.createSprite(spritesheet, i * 16, 2 * 16));
             this.sprites['corner_outer'].push(this.createSprite(spritesheet, i * 16, 3 * 16));
         }
+
 
         // TILES_CONTAINER.addChild(new PIXI.Sprite(spritesheet));
     };
@@ -94,7 +88,8 @@ define(['js/terrain/tile.js', 'js/lib/perlin.js', 'js/lib/vector2.js'], function
         var newSprite = null;
         if (tile.height > .5) {
             newSprite = this.getOverlaySprite('center', 0);
-            tile.fertile = true;
+            tile.tags.add('fertile');
+            tile.tags.add('walkable');
             
         } else {
 
@@ -227,6 +222,21 @@ define(['js/terrain/tile.js', 'js/lib/perlin.js', 'js/lib/vector2.js'], function
         output.anchor = new PIXI.Point(.5, .5);
         output.position = new PIXI.Point(8, 8);
         output.rotation = rotation * (Math.PI / 180);
+
+        return output;
+    }
+
+    // PUBLIC 
+
+    StrataWorld.prototype.getTilesByTag = function(tag) {
+        var output = [];
+        for (var i = this.tiles.length - 1; i >= 0; i--) {
+            output = output.concat(
+                this.tiles[i].filter(function(tile){
+                    return tile.tags.has(tag);
+                })
+            );
+        };
 
         return output;
     }

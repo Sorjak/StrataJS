@@ -10,7 +10,7 @@ define(function() {
         this.height = height;
         this.weight = Math.floor((this.height * 100) / 25);        
         this.occupants = new Set();
-        this.fertile = false;
+        this.tags = new Set();
 
 
         // DISPLAY STUFF 
