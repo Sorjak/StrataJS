@@ -15,7 +15,7 @@ define(['js/entities/animal.js', 'js/lib/state-machine.min.js'], function(Animal
             this.dna = dna;
 
         } else {
-            this.dna.maxHealth = 200;
+            this.dna.max_health = 200;
             this.dna.moveSpeed = 1.5;
 
             this.dna.visionRadius = 10; //in tile lengths

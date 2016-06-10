@@ -46,7 +46,11 @@ requirejs(["js/lib/pixi/bin/pixi.js"], function(pixi) {
             fpsCounter.textContent = "FPS: " + Math.floor(PIXI.ticker.shared.FPS);
         }
 
-
+        var text = new PIXI.Text("Loading...", {font:"24px Arial", fill:0xFFFFFF});
+        text.x = 400;
+        text.y = 300;
+        STAGE.addChild(text);
+        RENDERER.render(STAGE);
 
         // Load static assets and create a render texture
 
@@ -55,11 +59,13 @@ requirejs(["js/lib/pixi/bin/pixi.js"], function(pixi) {
         loader.add('white_rough', "resources/generated/white_rough.png");
 
         loader.once('complete', function() {
+            STAGE.removeChild(text);
             game = new StrataGame();
 
 
             var tex = TILES_CONTAINER.generateTexture(RENDERER);
             var background = new PIXI.Sprite(tex);
+
             STAGE.addChild(background);
             STAGE.addChild(FIRST_LAYER);
             STAGE.addChild(SECOND_LAYER);

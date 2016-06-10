@@ -31,6 +31,21 @@ define( function() {
         return textureArray;
     }
 
+    Utils.cubicBezier = function(p0, p1, p2, p3, t) {
+        var u = (1 - t);
+        var tt = t*t;
+        var uu = u*u;
+        var uuu = uu * u;
+        var ttt = tt * t;
+
+        var p = p0.multiplyScalar(uuu).clone();
+        p.add( p1.multiplyScalar(3 * uu * t) ); //second term
+        p.add( p2.multiplyScalar(3 * u * tt) ); //third term
+        p.add( p3.multiplyScalar(ttt) ); //fourth term
+
+        return p;
+    };
+
 
     return Utils;
 

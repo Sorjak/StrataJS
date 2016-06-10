@@ -7,12 +7,12 @@ define(['js/lib/vector2.js'], function(Vector2) {
         this.container = container;
 
         this.dna = {
-            max_health      : 100,
-            max_energy      : 100,
-            death_threshold : 100,
-            metabolism      : 0.1,
-            sex_drive       : 0.1,
-            fatigue_rate    : 0.1
+            max_health      : 100, // health for fights and being eaten
+            max_energy      : 100, // energy for performing actions
+            death_threshold : 100, // age past which death is possible
+            metabolism      : 0.1, // rate at which energy decays
+            sex_drive       : 0.1, // rate at which desire rises
+            fatigue_rate    : 0.1  // rate at which fatigue (sleep) rises
         };
 
         this.health = this.dna.max_health;
@@ -22,8 +22,8 @@ define(['js/lib/vector2.js'], function(Vector2) {
         this.check_age_time = 10; // check every ten seconds
         this.check_age_timer = 0;
 
-        this.fatigue    = 0;
-        this.desire     = 0;
+        this.fatigue        = 0;
+        this.desire         = 0;
 
         this.initSprite(new PIXI.Point(tile.position.x, tile.position.y), path);
         this.rotation = this.sprite.rotation;
@@ -80,7 +80,7 @@ define(['js/lib/vector2.js'], function(Vector2) {
         // }
 
         this.age     += .003;
-        this.energy  = Math.max(this.energy - this.dna.metabolism, 0);
+        // this.energy  = Math.max(this.energy - this.dna.metabolism, 0);
         this.fatigue = Math.min(this.fatigue + this.dna.fatigue_rate, 100);
         this.desire  = Math.min(this.desire + this.dna.sex_drive, 100);
 
@@ -164,21 +164,6 @@ define(['js/lib/vector2.js'], function(Vector2) {
         + ") | Age: " + Math.round(this.age) + " | Energy: " + Math.round(this.energy);
 
         return message;
-    };
-
-    StrataObject.prototype.cubicBezier = function(p0, p1, p2, p3, t) {
-        var u = (1 - t);
-        var tt = t*t;
-        var uu = u*u;
-        var uuu = uu * u;
-        var ttt = tt * t;
-
-        var p = p0.multiplyScalar(uuu).clone();
-        p.add( p1.multiplyScalar(3 * uu * t) ); //second term
-        p.add( p2.multiplyScalar(3 * u * tt) ); //third term
-        p.add( p3.multiplyScalar(ttt) ); //fourth term
-
-        return p;
     };
 
     return StrataObject;

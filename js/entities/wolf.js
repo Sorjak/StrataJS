@@ -15,7 +15,7 @@ define(['js/entities/animal.js', 'js/lib/state-machine.min.js'], function(Animal
             this.dna = dna;
 
         } else {
-            this.dna.maxHealth = 400;
+            this.dna.max_health = 400;
             this.dna.moveSpeed = 1.8;
 
             this.dna.visionRadius = 15; //in tile lengths
@@ -29,7 +29,7 @@ define(['js/entities/animal.js', 'js/lib/state-machine.min.js'], function(Animal
         }
         
 
-        this.health = this.dna.maxHealth;
+        this.health = this.dna.max_health;
     };
 
     Wolf.prototype = Object.create(Animal.prototype);

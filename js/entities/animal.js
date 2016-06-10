@@ -5,18 +5,19 @@ define(['js/moving_object.js', 'js/lib/vector2.js', 'js/lib/state-machine.min.js
     function Animal(tile, container, image_path) {
         MovingObject.call(this, current_id++, tile, container, image_path);
         
-        this.sprite.width = 128;
-        this.sprite.height = 128;
+        // this.sprite.width = 128;
+        // this.sprite.height = 128;
         // this.sprite.anchor = new PIXI.Point(.5, .5);
 
-        this.foodTarget = null;
-        this.foodPosition = null;
+        this.foodTarget     = null;
+        this.foodPosition   = null;
 
-        this.hunger     = 0;
-        this.thirst     = 0;
+        this.current_food   = 0;
+        this.hunger         = 0;
+        this.thirst         = 0;
 
-        this.growth     = 0;
-        this.visionTimer = 0;
+        this.growth         = 0;
+        this.visionTimer    = 0;
         
         this.foodTag = "";
 
@@ -32,13 +33,15 @@ define(['js/moving_object.js', 'js/lib/vector2.js', 'js/lib/state-machine.min.js
 
 
         this.events = [
-            { name: 'beginEating',  from: 'movingToEat',  to: 'eating'},
-            { name: 'pathBlocked',  from: 'movingToEat',  to: 'foraging'},
-            { name: 'finishFood',   from: 'eating', to: 'idle'},
-            { name: 'goIntoLabor',  from: '*', to: 'birthing'},
-            { name: 'giveBirth' ,   from: 'birthing', to: 'idle'},
-            { name: 'getThirsty' ,  from: 'idle', to: 'thirsty'},
-            { name: 'thirstQuenched', from: 'thirsty', to: 'idle'}
+            { name: 'beginEating',      from: 'movingToEat',  to: 'eating'},
+            { name: 'pathBlocked',      from: 'movingToEat',  to: 'foraging'},
+            { name: 'finishFood',       from: 'eating', to: 'idle'},
+            { name: 'goIntoLabor',      from: '*', to: 'birthing'},
+            { name: 'giveBirth' ,       from: 'birthing', to: 'idle'},
+            { name: 'getThirsty' ,      from: 'idle', to: 'thirsty'},
+            { name: 'thirstQuenched',   from: 'thirsty', to: 'idle'},
+            { name: 'goToSleep',        from: 'idle', to: 'sleeping'},
+            { name: 'wakeUp',           from: 'sleeping', to: 'idle'}
         ];
 
         this.fsm = this.initStateMachine();
@@ -74,13 +77,17 @@ define(['js/moving_object.js', 'js/lib/vector2.js', 'js/lib/state-machine.min.js
             this.fsm.thirstQuenched();
         }
 
-
-        if (this.energy > this.dna.growthThreshold) {
-            this.fsm.goIntoLabor();
+        if (this.fsm.is('sleeping')) {
+            this.sleep(deltaTime);
         }
 
-        this.hunger = Math.min(this.hunger + this.dna.metabolism, 100);
-        this.thirst = Math.min(this.thirst + this.dna.metabolism, 100);
+        if (this.current_food <= 0){
+            this.hunger = Math.min(this.hunger + (this.dna.metabolism * deltaTime), 100);
+        } else {
+            this.digest(deltaTime);
+        }
+
+        this.thirst = Math.min(this.thirst + (this.dna.metabolism * deltaTime), 100);
 
         MovingObject.prototype.update.call(this, deltaTime);
     };
@@ -99,6 +106,7 @@ define(['js/moving_object.js', 'js/lib/vector2.js', 'js/lib/state-machine.min.js
 
     Animal.prototype.getStats = function() {
         var message = "| Hunger : " + (Math.round(this.hunger)) + 
+        " | Fatigue : " + (Math.round(this.fatigue)) + 
         " | Current State: " + this.fsm.current + "\nDNA INFO: \n";
 
         var curr_dna = this.dna;
@@ -114,11 +122,6 @@ define(['js/moving_object.js', 'js/lib/vector2.js', 'js/lib/state-machine.min.js
     // STATE METHODS
 
     Animal.prototype.idle = function(deltaTime) {
-        if (this.movePath == null) {
-            var rTile = game.getRandomTile();
-            if (rTile != null) this.goTo(rTile);
-        }
-
         if (this.hunger >= 100) {
             this.fsm.getHungry();
         }
@@ -126,19 +129,23 @@ define(['js/moving_object.js', 'js/lib/vector2.js', 'js/lib/state-machine.min.js
         else if (this.thirst >= 100) {
             this.fsm.getThirsty();
         }
+
+        if (this.fatigue >= 100) {
+            this.fsm.goToSleep();
+        }
     }
 
     Animal.prototype.eat = function(deltaTime) {
 
         if (this.foodTarget.health > 0) {
-            this.foodTarget.getEaten(this.dna.eatSpeed * deltaTime);
+            var eatAmount = this.dna.eatSpeed * deltaTime;
+            this.current_food += eatAmount
+            this.foodTarget.getEaten(eatAmount);
 
         } else {
-            this.energy += this.foodTarget.energy;
             this.hunger = 0;
             this.foodTarget = null
             this.foodPosition = null;
-
 
             this.fsm.finishFood();
         }
@@ -167,6 +174,23 @@ define(['js/moving_object.js', 'js/lib/vector2.js', 'js/lib/state-machine.min.js
             }
             this.fsm.giveBirth();
         }
+    }
+
+    Animal.prototype.sleep = function(deltaTime) {
+        this.fatigue -= deltaTime;
+
+        if (this.fatigue <= 0) {
+            this.fatigue = 0;
+            this.fsm.wakeUp();
+        }
+    }
+
+    Animal.prototype.digest = function(deltaTime) {
+        var amount = this.metabolism * this.current_food * deltaTime;
+        console.log(amount);
+
+        this.current_food -= amount;
+        this.energy = Math.min(this.energy + amount, this.dna.max_energy);
     }
 
 
