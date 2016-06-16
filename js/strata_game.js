@@ -13,11 +13,11 @@ define(["js/terrain/strata_world.js", "js/entities/bunny.js", "js/entities/wolf.
         this.world.generateTiles();
 
         // wolf = new Wolf( this.world.tiles[20][20], SECOND_LAYER );
-        this.spawnEntity(Wolf);
+        // this.spawnEntity(Wolf);
 
-        for (var i = 4; i >= 0; i--) {
-            this.spawnEntity(Bunny);
-        };
+        // for (var i = 4; i >= 0; i--) {
+        //     this.spawnEntity(Bunny);
+        // };
 
         // for (var i = 15; i >= 0; i--) {
         //     var ranTile = null;
@@ -109,8 +109,7 @@ define(["js/terrain/strata_world.js", "js/entities/bunny.js", "js/entities/wolf.
         if (filtered.length > 0) {
             var ranIndex = Math.floor(Math.random() * (filtered.length - 1));
             var e = new entity(filtered[ranIndex], SECOND_LAYER);
-            console.log(e);
-
+            
             this.addObject(e);
         } else {
             console.log("unable to spawn entitity");

@@ -84,19 +84,29 @@ define(["js/lib/keyboard.js"], function(Keyboard) {
     Camera.prototype.zoom = function(e) {
         e.preventDefault();
 
-        // if (e.wheelDelta > 0) {
-        //     // Scroll up
-        //     var prevScale = this.stage.scale;
+        if (e.target.tagName == "CANVAS") {
 
-        //     this.stage.scale = new PIXI.Point(prevScale.x + .1, prevScale.y + .1);
+            if (e.wheelDelta > 0) {
+                // Scroll up
+                var prevScale = this.stage.scale;
 
-        // } else {
-        //     // Scroll down
+                this.stage.scale = new PIXI.Point(prevScale.x + .1, prevScale.y + .1);
 
-        //     var prevScale = this.stage.scale;
 
-        //     this.stage.scale = new PIXI.Point(prevScale.x - .1, prevScale.y - .1);
-        // }
+            } else {
+                // Scroll down
+
+                var prevScale = this.stage.scale;
+
+                this.stage.scale = new PIXI.Point(prevScale.x - .1, prevScale.y - .1);
+            }
+
+            var mousePoint = new PIXI.Point(e.x, e.y);
+            var zoomPoint = this.stage.toLocal(mousePoint);
+
+            // this.stage.position.x -= zoomPoint.x
+            // this.stage.position.y -= zoomPoint.y;
+        }
 
     }
 
