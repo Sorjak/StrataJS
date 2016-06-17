@@ -9,7 +9,7 @@ define(["js/terrain/strata_world.js", "js/entities/bunny.js", "js/entities/wolf.
         this.statObject = null;
         this.statConsole = document.getElementById("console-text");
 
-        this.world = new StrataWorld( 100, 100, TILE_SIZE);
+        this.world = new StrataWorld( 4, 4, TILE_SIZE);
         this.world.generateTiles();
 
         // wolf = new Wolf( this.world.tiles[20][20], SECOND_LAYER );

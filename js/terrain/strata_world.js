@@ -1,4 +1,5 @@
-define(['js/terrain/tile.js', 'js/lib/perlin.js', 'js/lib/vector2.js'], function(Tile, noise_module, Vector2) {
+define(['js/terrain/tile.js', 'js/lib/perlin.js', 'js/lib/vector2.js', 'js/terrain/chunk.js'], 
+    function(Tile, noise_module, Vector2, Chunk) {
 
     var TILE_POSITION = {
             left:       1,
@@ -16,6 +17,7 @@ define(['js/terrain/tile.js', 'js/lib/perlin.js', 'js/lib/vector2.js'], function
         this.height = height;
 
         this.tile_size = 16;
+        this.chunk_size = 48;
 
         this.chunks = [];
         this.tiles = [];
@@ -41,8 +43,6 @@ define(['js/terrain/tile.js', 'js/lib/perlin.js', 'js/lib/vector2.js'], function
             this.sprites['grass']['corner_outer'].push(this.createSprite(grass_spritesheet, i * 16, 3 * 16));
         }
 
-
-        // TILES_CONTAINER.addChild(new PIXI.Sprite(spritesheet));
     };
 
     StrataWorld.prototype.createSprite = function(spritesheet, x, y) {
@@ -57,51 +57,70 @@ define(['js/terrain/tile.js', 'js/lib/perlin.js', 'js/lib/vector2.js'], function
         return output;
     }
 
-    StrataWorld.prototype.generateChunk = function(width, height) {
-        var outputTiles = [];
-
-        for (var i = 0; i < width - 1; i++) {
-            outputTiles[i] = [];
-
-            for (var j = 0; j < height; j++) {
-                var perlin_height = (noise_module.simplex2(i / 100, j / 100) + 1) / 2;
-                var tile = new Tile( i, j, perlin_height, TILES_CONTAINER);
-                outputTiles[i][j] = tile;
-            }
-        }
-
-
-        return outputTiles;
-    }
-
-
     StrataWorld.prototype.generateTiles = function() {
-        this.tiles = this.generateChunk(this.width, this.height);
+        var waterColor      = 0x3C5C91;
+        var grassColor      = 0x688358;
+        var highlandsColor  = 0x68CC58;
+        var mountainsColor  = 0xFFCC58;
 
-        for (var i = 0; i < this.width - 1; i++) {
-            for (var j = 0; j < this.height; j++) {
-                var tile = this.tiles[i][j];
-                if (this.processTile(tile, 'grass', 0x688358, .2, .5)) {
-                    tile.tags.add('walkable');
+
+        for (var x = 0; x < this.width; x++) {
+            this.chunks[x] = [];
+            for (var y = 0; y < this.height; y++) {
+
+                var chunk = this.generateChunk(x, y, this.chunk_size, this.chunk_size);
+                
+                for (var i = 0; i < chunk.width; i++) {
+                    for (var j = 0; j < chunk.height; j++) {
+                        var tile = chunk.tiles[i][j];
+                        if (this.processTile(chunk, tile, 'grass', mountainsColor, .9, 1)) {
+                            tile.setBackgroundColor(highlandsColor);   
+                        }
+                        else if (this.processTile(chunk, tile, 'grass', highlandsColor, .5, .9)) {
+                            tile.setBackgroundColor(grassColor);
+                            tile.tags.add('walkable');
+                        }
+                        else if (this.processTile(chunk, tile, 'grass', grassColor, .2, .5)) {
+                            tile.setBackgroundColor(waterColor);
+                            tile.tags.add('walkable');
+                        }
+
+
+                    }
                 }
-                else if (this.processTile(tile, 'grass', 0x68CC58, .5, .9)) {
-                    
-                }
-                else if (this.processTile(tile, 'grass', 0xFFCC58, .9, 1)) {
-                    
-                }
+
+                this.chunks[x][y] = chunk;
             }
         }
     };
 
-    StrataWorld.prototype.processTile = function(tile, sprite_type, tint, minheight, maxheight) {
+    StrataWorld.prototype.generateChunk = function(x, y, width, height) {
+        var c = new Chunk(width, height);
+        var offsetX = x * width;
+        var offsetY = y * height;
+
+        for (var i = 0; i < c.width; i++) {
+            c.tiles[i] = [];
+
+            for (var j = 0; j < c.height; j++) {
+                var perlin_height = (noise_module.simplex2((i + offsetX) / 100, (j + offsetY) / 100) + 1) / 2;
+                var tile = new Tile(i, j, offsetX, offsetY, perlin_height, TILES_CONTAINER);
+                c.tiles[i][j] = tile;
+            }
+        }
+
+
+        return c
+    }
+
+    StrataWorld.prototype.processTile = function(chunk, tile, sprite_type, tint, minheight, maxheight) {
         var newSprite = null;
         if (tile.height >= minheight && tile.height < maxheight) {
             newSprite = this.getOverlaySprite(sprite_type, 'center', 0);
             
         } else {
 
-            var neighbors = this.getNeighborsForTile(tile, false);
+            var neighbors = this.getNeighborsForTile(chunk.tiles, tile, false);
             var qualifying = this.getQualifyingNeighbors(neighbors, minheight, maxheight);
             var bm = this.getNeighborBitmask(tile, qualifying);
 
@@ -155,51 +174,51 @@ define(['js/terrain/tile.js', 'js/lib/perlin.js', 'js/lib/vector2.js'], function
         return tallest;
     }
 
-    StrataWorld.prototype.getNeighborsForTile = function(tile, diagonal) {
+    StrataWorld.prototype.getNeighborsForTile = function(tiles, tile, diagonal) {
         var x = tile.index.x;
         var y = tile.index.y;
         var output = [];
         
         //west
-        if (this.tiles[x-1] && this.tiles[x-1][y]) {
-            output.push(this.tiles[x-1][y]);
+        if (tiles[x-1] && tiles[x-1][y]) {
+            output.push(tiles[x-1][y]);
         }
         
         //north
-        if (this.tiles[x] && this.tiles[x][y-1]) {
-            output.push(this.tiles[x][y-1]);
+        if (tiles[x] && tiles[x][y-1]) {
+            output.push(tiles[x][y-1]);
         }
         
         //east
-        if (this.tiles[x+1] && this.tiles[x+1][y]) {
-            output.push(this.tiles[x+1][y]);
+        if (tiles[x+1] && tiles[x+1][y]) {
+            output.push(tiles[x+1][y]);
         }
         
         //south
-        if (this.tiles[x] && this.tiles[x][y+1]) {
-            output.push(this.tiles[x][y+1]);
+        if (tiles[x] && tiles[x][y+1]) {
+            output.push(tiles[x][y+1]);
         }
         
 
         if (diagonal) {
             //northwest
-            if (this.tiles[x-1] && this.tiles[x-1][y-1]) {
-                output.push(this.tiles[x-1][y-1]);
+            if (tiles[x-1] && tiles[x-1][y-1]) {
+                output.push(tiles[x-1][y-1]);
             }
             
             //northeast
-            if (this.tiles[x+1] && this.tiles[x+1][y+1]) {
-                output.push(this.tiles[x+1][y+1]);
+            if (tiles[x+1] && tiles[x+1][y+1]) {
+                output.push(tiles[x+1][y+1]);
             }
             
             //southwest
-            if (this.tiles[x-1] && this.tiles[x-1][y+1]) {
-                output.push(this.tiles[x-1][y+1]);
+            if (tiles[x-1] && tiles[x-1][y+1]) {
+                output.push(tiles[x-1][y+1]);
             }
             
             //southeast
-            if (this.tiles[x+1] && this.tiles[x+1][y-1]) {
-                output.push(this.tiles[x+1][y-1]);
+            if (tiles[x+1] && tiles[x+1][y-1]) {
+                output.push(tiles[x+1][y-1]);
             }
         }
 

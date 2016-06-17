@@ -2,8 +2,8 @@
 define(function() {
     "use strict";
     
-    function Tile(hindex, vindex, height, container) {
-        this.position = new Vector2(hindex * TILE_SIZE, vindex * TILE_SIZE);
+    function Tile(hindex, vindex, hoffset, voffset, height, container) {
+        this.position = new Vector2((hindex + hoffset) * TILE_SIZE, (vindex  + voffset) * TILE_SIZE);
         this.index = new Vector2(hindex, vindex);
         this.container = container;
         
@@ -78,7 +78,11 @@ define(function() {
         return output;
     }
 
+    Tile.prototype.setBackgroundColor = function(color) {
+        this.graphics.beginFill(color);
+        this.graphics.drawRect(0, 0, TILE_SIZE, TILE_SIZE);
 
+    }
     
     Tile.prototype.highlight = function() {
         this.graphics.lineStyle(1, 0xFF0000, 1);
