@@ -67,6 +67,12 @@ define(['js/moving_object.js', 'js/lib/vector2.js', 'js/lib/state-machine.min.js
 
         if (this.fsm.is('eating')) {
             this.eat(deltaTime);
+        } else {
+            if (this.current_food <= 0){
+                this.hunger = Math.min(this.hunger + (this.dna.metabolism * deltaTime), 100);
+            } else {
+                this.digest(deltaTime);
+            }
         }
 
         if (this.fsm.is('birthing')) {
@@ -79,12 +85,6 @@ define(['js/moving_object.js', 'js/lib/vector2.js', 'js/lib/state-machine.min.js
 
         if (this.fsm.is('sleeping')) {
             this.sleep(deltaTime);
-        }
-
-        if (this.current_food <= 0){
-            this.hunger = Math.min(this.hunger + (this.dna.metabolism * deltaTime), 100);
-        } else {
-            this.digest(deltaTime);
         }
 
         this.thirst = Math.min(this.thirst + (this.dna.metabolism * deltaTime), 100);
@@ -106,6 +106,7 @@ define(['js/moving_object.js', 'js/lib/vector2.js', 'js/lib/state-machine.min.js
 
     Animal.prototype.getStats = function() {
         var message = "| Hunger : " + (Math.round(this.hunger)) + 
+        " | Food : " + (Math.round(this.current_food)) + 
         " | Fatigue : " + (Math.round(this.fatigue)) + 
         " | Current State: " + this.fsm.current + "\nDNA INFO: \n";
 
@@ -130,7 +131,7 @@ define(['js/moving_object.js', 'js/lib/vector2.js', 'js/lib/state-machine.min.js
             this.fsm.getThirsty();
         }
 
-        if (this.fatigue >= 100) {
+        else if (this.fatigue >= 100) {
             this.fsm.goToSleep();
         }
     }
@@ -186,11 +187,10 @@ define(['js/moving_object.js', 'js/lib/vector2.js', 'js/lib/state-machine.min.js
     }
 
     Animal.prototype.digest = function(deltaTime) {
-        var amount = this.metabolism * this.current_food * deltaTime;
-        console.log(amount);
+        var amount = this.dna.metabolism * this.current_food * deltaTime;
 
         this.current_food -= amount;
-        this.energy = Math.min(this.energy + amount, this.dna.max_energy);
+        this.energy = Math.min(this.energy + (amount * deltaTime), this.dna.max_energy);
     }
 
 

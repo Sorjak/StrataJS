@@ -12,18 +12,9 @@ define(function() {
         this.occupants = new Set();
         this.tags = new Set();
 
-
+        this.graphics = new PIXI.Graphics();
         // DISPLAY STUFF 
         this.initSprite();
-
-        this.graphics = new PIXI.Graphics();
-
-        var backgroundColor = 0x3C5C91;
-
-        this.graphics.beginFill(backgroundColor);
-        this.graphics.drawRect(0, 0, TILE_SIZE, TILE_SIZE);
-
-        this.sprite.addChild(this.graphics);
     };
 
     Tile.prototype.initSprite = function() {
@@ -33,6 +24,13 @@ define(function() {
         
         this.sprite.position.x = this.position.x;
         this.sprite.position.y = this.position.y;
+
+        var backgroundColor = 0x3C5C91;
+
+        this.graphics.beginFill(backgroundColor);
+        this.graphics.drawRect(0, 0, TILE_SIZE, TILE_SIZE);
+
+        this.sprite.addChild(this.graphics);
         
         this.container.addChild(this.sprite);
     };

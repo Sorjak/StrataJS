@@ -27,7 +27,7 @@ define(['js/entities/animal.js', 'js/lib/state-machine.min.js'], function(Animal
             this.dna.growthThreshold = 130;
         }
         
-        this.health = this.dna.maxHealth;
+        this.health = this.dna.max_health;
     };
 
     Bunny.prototype = Object.create(Animal.prototype);
