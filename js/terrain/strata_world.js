@@ -17,7 +17,7 @@ define(['js/terrain/tile.js', 'js/lib/perlin.js', 'js/lib/vector2.js', 'js/terra
         this.height = height;
 
         this.tile_size = 16;
-        this.chunk_size = 48;
+        this.chunk_size = 16;
 
         this.chunks = [];
         this.tiles = [];
@@ -63,64 +63,119 @@ define(['js/terrain/tile.js', 'js/lib/perlin.js', 'js/lib/vector2.js', 'js/terra
         var highlandsColor  = 0x68CC58;
         var mountainsColor  = 0xFFCC58;
 
+        var self = this;
+        var promiseList = [];
 
-        for (var x = 0; x < this.width; x++) {
-            this.chunks[x] = [];
-            for (var y = 0; y < this.height; y++) {
+        for (var x = 0; x < self.width; x++) {
 
-                var chunk = this.generateChunk(x, y, this.chunk_size, this.chunk_size);
-                
-                for (var i = 0; i < chunk.width; i++) {
-                    for (var j = 0; j < chunk.height; j++) {
-                        var tile = chunk.tiles[i][j];
-                        if (this.processTile(chunk, tile, 'grass', mountainsColor, .9, 1)) {
-                            tile.setBackgroundColor(highlandsColor);   
+            for (var y = 0; y < self.height; y++) {
+
+                var prom = self.generateChunk(x, y, self.chunk_size, self.chunk_size)
+                .then(function(chunk) {
+                return Chunk.getTilesAs2DArray(chunk.chunk_id)
+                    .catch(function(err) {
+                        console.log(err);
+                    })
+                    .then(function (tiles) {
+                        for (var i = 0; i < chunk.width; i++) {
+                            for (var j = 0; j < chunk.height; j++) {
+
+                                var tile = tiles[i][j];
+
+                                LOAD_TEXT.text = "Generating Tile " + tile.tile_id;
+                                RENDERER.render(STAGE);
+
+                                var sprite = new PIXI.Container();
+                                sprite.height = self.tile_size; 
+                                sprite.width = self.tile_size;
+                                
+                                sprite.position.x = tile.position.x;
+                                sprite.position.y = tile.position.y;
+
+                                var backgroundColor = 0x3C5C91;
+
+                                var graphics = new PIXI.Graphics();
+                                graphics.beginFill(backgroundColor);
+                                graphics.drawRect(0, 0, self.tile_size, self.tile_size);
+
+                                sprite.addChild(graphics);
+
+                                if (self.processTile(sprite, tiles, tile, 'grass', mountainsColor, .9, 1)) {
+                                    graphics.beginFill(highlandsColor);
+                                    graphics.drawRect(0, 0, TILE_SIZE, TILE_SIZE);  
+                                }
+                                else if (self.processTile(sprite, tiles, tile, 'grass', highlandsColor, .5, .9)) {
+                                    graphics.beginFill(grassColor);
+                                    graphics.drawRect(0, 0, TILE_SIZE, TILE_SIZE);
+                                    // tile.tags.add('walkable');
+                                }
+                                else if (self.processTile(sprite, tiles, tile, 'grass', grassColor, .2, .5)) {
+                                    graphics.beginFill(waterColor);
+                                    graphics.drawRect(0, 0, TILE_SIZE, TILE_SIZE);
+                                    // tile.tags.add('walkable');
+                                }
+
+                                
+                                
+                                TILES_CONTAINER.addChild(sprite);
+                            }
                         }
-                        else if (this.processTile(chunk, tile, 'grass', highlandsColor, .5, .9)) {
-                            tile.setBackgroundColor(grassColor);
-                            tile.tags.add('walkable');
-                        }
-                        else if (this.processTile(chunk, tile, 'grass', grassColor, .2, .5)) {
-                            tile.setBackgroundColor(waterColor);
-                            tile.tags.add('walkable');
-                        }
+                    }); // end db query
 
+                }); // end generateChunk
 
-                    }
-                }
-
-                this.chunks[x][y] = chunk;
+                promiseList.push(prom);
             }
         }
+        return Promise.all(promiseList);
     };
 
     StrataWorld.prototype.generateChunk = function(x, y, width, height) {
         var c = new Chunk(width, height);
-        var offsetX = x * width;
-        var offsetY = y * height;
+        var self = this;
 
-        for (var i = 0; i < c.width; i++) {
-            c.tiles[i] = [];
+        return DATABASE.chunks.add(c).then(function(dbchunk) {
+            var chunk = dbchunk[0];
 
-            for (var j = 0; j < c.height; j++) {
-                var perlin_height = (noise_module.simplex2((i + offsetX) / 100, (j + offsetY) / 100) + 1) / 2;
-                var tile = new Tile(i, j, offsetX, offsetY, perlin_height, TILES_CONTAINER);
-                c.tiles[i][j] = tile;
+            LOAD_TEXT.text = "Generating Chunk " + chunk.chunk_id;
+            RENDERER.render(STAGE);
+
+            var offsetX = x * chunk.width;
+            var offsetY = y * chunk.height;
+
+            for (var i = 0; i < chunk.width; i++) {
+
+                for (var j = 0; j < chunk.height; j++) {
+                    var adjustedX = i + offsetX;
+                    var adjustedY = j + offsetY;
+                    var perlin_height = (noise_module.simplex2(adjustedX / 100, adjustedY / 100) + 1) / 2;
+                    // var tile = new Tile(i, j, offsetX, offsetY, perlin_height, TILES_CONTAINER);
+                    var tile = {
+                        'chunk_id': chunk.chunk_id,
+                        'index': new Vector2(i, j),
+                        'position': new Vector2(adjustedX * self.tile_size, adjustedY * self.tile_size),
+                        'height': perlin_height
+                    };
+                    Chunk.addTile(tile);
+                }
             }
-        }
 
-
-        return c
+            return chunk;
+        }).catch(function(e) {
+            console.log(e);
+            return null;
+        });  
+        
     }
 
-    StrataWorld.prototype.processTile = function(chunk, tile, sprite_type, tint, minheight, maxheight) {
+    StrataWorld.prototype.processTile = function(container, tiles, tile, sprite_type, tint, minheight, maxheight) {
         var newSprite = null;
         if (tile.height >= minheight && tile.height < maxheight) {
             newSprite = this.getOverlaySprite(sprite_type, 'center', 0);
             
         } else {
 
-            var neighbors = this.getNeighborsForTile(chunk.tiles, tile, false);
+            var neighbors = this.getNeighborsForTile(tiles, tile, false);
             var qualifying = this.getQualifyingNeighbors(neighbors, minheight, maxheight);
             var bm = this.getNeighborBitmask(tile, qualifying);
 
@@ -141,7 +196,7 @@ define(['js/terrain/tile.js', 'js/lib/perlin.js', 'js/lib/vector2.js', 'js/terra
 
         if (newSprite != null) {
             newSprite.tint = tint;
-            tile.sprite.addChild(newSprite);
+            container.addChild(newSprite);
 
             return true;
         }
