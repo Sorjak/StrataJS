@@ -18,3 +18,16 @@
 #info #fps {
     margin-left: 670px;
 }
+
+#user-inputs label {
+    width: 150px;
+    display: block;
+}
+
+#user-inputs input {
+    margin-bottom: 10px;
+}
+
+.hidden {
+    display: none;
+}

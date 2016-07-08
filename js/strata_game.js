@@ -8,10 +8,7 @@ define(["js/terrain/strata_world.js", "js/entities/bunny.js", "js/entities/wolf.
 
         this.statObject = null;
         this.statConsole = document.getElementById("console-text");
-
-        this.world = new StrataWorld( 4, 4, TILE_SIZE);
         
-
         // wolf = new Wolf( this.world.tiles[20][20], SECOND_LAYER );
         // this.spawnEntity(Wolf);
 
@@ -32,13 +29,21 @@ define(["js/terrain/strata_world.js", "js/entities/bunny.js", "js/entities/wolf.
         //     this.addObject(flower);
         // };
         
-        this.astar = new Astar(this.world);
         this.graphics = new PIXI.Graphics();
         
     };
 
     StrataGame.prototype.start = function() {
         console.log("starting game");
+
+        var w_width = document.getElementById("world-width").value;
+        var w_height = document.getElementById("world-height").value;
+        var tile_size = document.getElementById("tile-size").value;
+        var chunk_size = document.getElementById("chunk-size").value;
+
+        this.world = new StrataWorld( w_width, w_height, tile_size, chunk_size );
+        this.astar = new Astar(this.world);
+
         return this.world.generateTiles();
     }
 

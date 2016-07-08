@@ -12,15 +12,14 @@ define(['js/terrain/tile.js', 'js/lib/perlin.js', 'js/lib/vector2.js', 'js/terra
             downright:  128
     };
     
-    function StrataWorld(width, height) {
-        this.width = width;
-        this.height = height;
+    function StrataWorld(width, height, tile_size, chunk_size) {
 
-        this.tile_size = 16;
-        this.chunk_size = 16;
+        console.log(width + " " + height + " " + tile_size + " " + chunk_size);
+        this.width = parseInt(width, 10);
+        this.height = parseInt(height, 10);
 
-        this.chunks = [];
-        this.tiles = [];
+        this.tile_size = parseInt(tile_size, 10);
+        this.chunk_size = parseInt(chunk_size, 10);
 
         noise_module.seed(Math.random());
 
@@ -48,6 +47,7 @@ define(['js/terrain/tile.js', 'js/lib/perlin.js', 'js/lib/vector2.js', 'js/terra
     StrataWorld.prototype.createSprite = function(spritesheet, x, y) {
         var cropRect = new PIXI.Rectangle(x, y, this.tile_size, this.tile_size);
         var cropped = spritesheet.clone();
+
         cropped.frame = cropRect;
         cropped.crop = cropRect;
 
@@ -82,7 +82,8 @@ define(['js/terrain/tile.js', 'js/lib/perlin.js', 'js/lib/vector2.js', 'js/terra
 
                                 var tile = tiles[i][j];
 
-                                LOAD_TEXT.text = "Generating Tile " + tile.tile_id;
+                                LOAD_TEXT.text = "Generating Tile " + tile.tile_id 
+                                + "/" + (chunk.width * chunk.height) * (self.width * self.height);
                                 RENDERER.render(STAGE);
 
                                 var sprite = new PIXI.Container();
@@ -100,23 +101,21 @@ define(['js/terrain/tile.js', 'js/lib/perlin.js', 'js/lib/vector2.js', 'js/terra
 
                                 sprite.addChild(graphics);
 
-                                if (self.processTile(sprite, tiles, tile, 'grass', mountainsColor, .9, 1)) {
+                                if (self.processTile(sprite, tiles, tile, 'grass', mountainsColor, .8, 1)) {
                                     graphics.beginFill(highlandsColor);
                                     graphics.drawRect(0, 0, TILE_SIZE, TILE_SIZE);  
                                 }
-                                else if (self.processTile(sprite, tiles, tile, 'grass', highlandsColor, .5, .9)) {
+                                else if (self.processTile(sprite, tiles, tile, 'grass', highlandsColor, .3, .8)) {
                                     graphics.beginFill(grassColor);
                                     graphics.drawRect(0, 0, TILE_SIZE, TILE_SIZE);
                                     // tile.tags.add('walkable');
                                 }
-                                else if (self.processTile(sprite, tiles, tile, 'grass', grassColor, .2, .5)) {
+                                else if (self.processTile(sprite, tiles, tile, 'grass', grassColor, .2, .3)) {
                                     graphics.beginFill(waterColor);
                                     graphics.drawRect(0, 0, TILE_SIZE, TILE_SIZE);
                                     // tile.tags.add('walkable');
                                 }
 
-                                
-                                
                                 TILES_CONTAINER.addChild(sprite);
                             }
                         }
@@ -316,13 +315,13 @@ define(['js/terrain/tile.js', 'js/lib/perlin.js', 'js/lib/vector2.js', 'js/terra
 
     StrataWorld.prototype.getTilesByTag = function(tag) {
         var output = [];
-        for (var i = this.tiles.length - 1; i >= 0; i--) {
-            output = output.concat(
-                this.tiles[i].filter(function(tile){
-                    return tile.tags.has(tag);
-                })
-            );
-        };
+        // for (var i = this.tiles.length - 1; i >= 0; i--) {
+        //     output = output.concat(
+        //         this.tiles[i].filter(function(tile){
+        //             return tile.tags.has(tag);
+        //         })
+        //     );
+        // };
 
         return output;
     }
