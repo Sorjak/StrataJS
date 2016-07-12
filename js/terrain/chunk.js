@@ -1,4 +1,4 @@
-define(['js/terrain/tile.js', 'js/lib/perlin.js', 'js/lib/vector2.js'], function(Tile, noise_module, Vector2) {
+define([], function() {
 
     function Chunk(width, height) {
         this.width = width;
@@ -12,6 +12,8 @@ define(['js/terrain/tile.js', 'js/lib/perlin.js', 'js/lib/vector2.js'], function
         return DATABASE.tiles.add(tile)
             .then(function(e) {
                 console.log("adding tile to db");
+
+                return e[0];
             })
             .catch(function(e) {
                 console.log(e);
@@ -20,11 +22,11 @@ define(['js/terrain/tile.js', 'js/lib/perlin.js', 'js/lib/vector2.js'], function
 
     Chunk.getTiles = function(chunk_id) {
         return DATABASE.tiles.query()
-        .filter('chunk_id', chunk_id)
-        .execute()
-        .then(function(tiles) {
-            return tiles;
-        });
+            .filter('chunk_id', chunk_id)
+            .execute()
+            .then(function(tiles) {
+                return tiles;
+            });
     }
 
     Chunk.getTilesAs2DArray = function(chunk_id) {

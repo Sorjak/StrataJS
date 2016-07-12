@@ -1,6 +1,6 @@
 // define(['js/strata_object.js'], function(StrataObject) {
 define(function() {
-    "use strict";
+    // "use strict";
     
     function Tile(hindex, vindex, hoffset, voffset, height, container) {
         this.position = new Vector2((hindex + hoffset) * TILE_SIZE, (vindex  + voffset) * TILE_SIZE);
@@ -33,6 +33,23 @@ define(function() {
         this.sprite.addChild(this.graphics);
         
         this.container.addChild(this.sprite);
+    };
+
+    Tile.initSprite = function(x, y, width, height, defaultColor) {
+        var sprite = new PIXI.Container();
+        sprite.width = width;        
+        sprite.height = height; 
+
+        sprite.position.x = x;
+        sprite.position.y = y; 
+                          
+        var graphics = new PIXI.Graphics();
+        graphics.beginFill(defaultColor);
+        graphics.drawRect(0, 0, width, height);
+
+        sprite.addChild(graphics);
+
+        return sprite;
     };
 
     Tile.prototype.enter = function(entity) {

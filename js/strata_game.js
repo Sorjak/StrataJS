@@ -52,7 +52,6 @@ define(["js/terrain/strata_world.js", "js/entities/bunny.js", "js/entities/wolf.
             entity.update(PIXI.ticker.shared.deltaTime);
         });
 
-
         if (this.statObject != null && this.statObject.health > 0) {
             this.statConsole.textContent = this.statObject.getStats();
         } else {
