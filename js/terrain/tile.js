@@ -2,37 +2,18 @@
 define(function() {
     // "use strict";
     
-    function Tile(hindex, vindex, hoffset, voffset, height, container) {
-        this.position = new Vector2((hindex + hoffset) * TILE_SIZE, (vindex  + voffset) * TILE_SIZE);
-        this.index = new Vector2(hindex, vindex);
-        this.container = container;
-        
+    function Tile(chunk_id, x, y, size, height, type) {
+        this.chunk_id = chunk_id;
+        this.position = new Vector2(x * size, y * size);
+
+        this.index = new Vector2(x, y);
+        this.size = size;
+
         this.height = height;
-        this.weight = Math.floor((this.height * 100) / 25);        
+        // this.weight = Math.floor((this.height * 100) / 25);        
         this.occupants = new Set();
         this.tags = new Set();
 
-        this.graphics = new PIXI.Graphics();
-        // DISPLAY STUFF 
-        this.initSprite();
-    };
-
-    Tile.prototype.initSprite = function() {
-        this.sprite = new PIXI.Container();
-        this.sprite.height = TILE_SIZE; 
-        this.sprite.width = TILE_SIZE;
-        
-        this.sprite.position.x = this.position.x;
-        this.sprite.position.y = this.position.y;
-
-        var backgroundColor = 0x3C5C91;
-
-        this.graphics.beginFill(backgroundColor);
-        this.graphics.drawRect(0, 0, TILE_SIZE, TILE_SIZE);
-
-        this.sprite.addChild(this.graphics);
-        
-        this.container.addChild(this.sprite);
     };
 
     Tile.initSprite = function(x, y, width, height, defaultColor) {
@@ -92,18 +73,7 @@ define(function() {
 
         return output;
     }
-
-    Tile.prototype.setBackgroundColor = function(color) {
-        this.graphics.beginFill(color);
-        this.graphics.drawRect(0, 0, TILE_SIZE, TILE_SIZE);
-
-    }
     
-    Tile.prototype.highlight = function() {
-        this.graphics.lineStyle(1, 0xFF0000, 1);
-        
-        this.graphics.drawRect(this.position.x , this.position.y, TILE_SIZE, TILE_SIZE);
-    };
 
     Tile.prototype.distanceTo = function(other) {
         var dx = this.index.x - other.index.x; 

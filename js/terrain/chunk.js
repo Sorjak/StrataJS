@@ -1,8 +1,10 @@
 define([], function() {
 
-    function Chunk(width, height) {
+    function Chunk(x, y, width, height) {
         this.width = width;
         this.height = height;
+
+        this.position = new PIXI.Point(x, y);
 
         // this.tiles = [];
     }

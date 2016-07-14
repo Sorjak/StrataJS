@@ -1,47 +1,80 @@
-// importScripts('./tile.js', '../lib/perlin.js', '../lib/vector2.js', './chunk.js');
+/*
+    author: uli
+
+    Web Worker (thread) to parallelize tile creation within a chunk.
+
+    This returns (via json) a 2D array of tiles, each containing a 
+    - chunk_id : refers to the parent chunk
+    - index : refers to the tile's x, y position within the chunk
+    - position : same as index, but adjusted to tile size for display
+    - height : noise determined height of tile
+
+*/
 
 importScripts('lib/require.js');
 
+// on message allows us to receive input from spawner script (StrataWorld.js in this case)
 onmessage = function(e) {
     var data = e.data;
 
-    chunk = data.chunk;
+    if (data.type == 'init') {
+        // require the necessary objects from other scripts
+        requirejs(['terrain/chunk.js', 'terrain/tile.js', 'lib/vector2.js', 'lib/perlin.js', 'lib/db.min.js'],
+            function(Chunk, Tile, Vector2, noise_module, dbjs) {
 
-    requirejs(['terrain/chunk.js', 'terrain/tile.js', 'lib/vector2.js', 'lib/perlin.js'], 
-        function(Chunk, Tile, Vector2, noise_module) {
+            function GenerateChunk(chunk, tile_size, seed, db) {
+                // We use the same seed across all Workers, so the smooth noise still works
+                noise_module.seed(seed);
+                var promiseList = [];
 
-        function GenerateChunk(x, y, width, height) {
+                postMessage({'type': 'progress', 'info' : "Begin Noise Creation"});
 
-            var offsetX = x * chunk.width;
-            var offsetY = y * chunk.height;
+                for (var i = 0; i < chunk.width; i++) {
+                    for (var j = 0; j < chunk.height; j++) {
+                        
+                        // Here we adjust the x and y values of the tile to map onto the simplex noise
+                        var adjustedX = i + (chunk.position.x * chunk.width);
+                        var adjustedY = j + (chunk.position.y * chunk.height);
 
-            var tilesList = [];
+                        // Find adjusted noise value, and remap that to 0, 1
+                        var perlin_height = (noise_module.simplex2(adjustedX / 100, adjustedY / 100) + 1) / 2;
 
-            for (var i = 0; i < chunk.width; i++) {
-                tilesList[i] = [];
+                        var tile = new Tile(chunk.chunk_id, i, j, tile_size, perlin_height);
 
-                for (var j = 0; j < chunk.height; j++) {
-                    var adjustedX = i + offsetX;
-                    var adjustedY = j + offsetY;
-                    var perlin_height = (noise_module.simplex2(adjustedX / 100, adjustedY / 100) + 1) / 2;
-
-                    tilesList[i][j] = {
-                        'chunk_id': chunk.chunk_id,
-                        'index': new Vector2(i, j),
-                        'position': new Vector2(adjustedX * 16, adjustedY * 16),
-                        'height': perlin_height
-                    };
+                        // Here we add the tile to the database for later querying. 
+                        // Also, we send a status update back to the main thread.
+                        var prom = db.tiles.add(tile).then(function(db_tile) {
+                            mytile = db_tile[0];
+                            var tile_num = mytile.index.x * chunk.height + mytile.index.y;
+                            var percentage = Math.floor((tile_num / (chunk.width * chunk.height)) * 100);
+                            postMessage({'type': 'progress', 'info' : "Creating tiles: " + percentage + "%"});
+                        });
+                        promiseList.push(prom);
+                    }
                 }
+
+                // Once all the tiles are in the DB, we tell the main thread that we are done.
+                Promise.all(promiseList).then(function(e) {
+                    console.log("worker " + chunk.chunk_id + " finished creating tiles");
+                    postMessage({'type': 'finished'});
+                });
             }
 
-            postMessage(tilesList);
-        }
+            dbjs.open({
+                server: 'strata-db',
+                version: 1,
+            }).then(function(database) {
+                GenerateChunk(data.chunk, data.tile_size, data.seed, database);
+            });
 
-        GenerateChunk(data.x, data.y, data.width, data.height);
+        });
+    }
 
-    });
+}
 
-
+function sleep(miliseconds) {
+    var currentTime = new Date().getTime();
+    while (currentTime + miliseconds >= new Date().getTime()) {}
 }
 
 

@@ -35,18 +35,19 @@ function mainLoop() {
 
 function startGame() {
     STAGE = new PIXI.Container();
+    LOAD_TEXT = new PIXI.Container();
     TILES_CONTAINER = new PIXI.Container();
     FIRST_LAYER = new PIXI.Container();
     SECOND_LAYER = new PIXI.Container();
     THIRD_LAYER = new PIXI.Container();
 
-    LOAD_TEXT = new PIXI.Text("", {font:"24px Arial", fill:0xFFFFFF});
-    LOAD_TEXT.x = 10;
-    LOAD_TEXT.y = 10;
+    // LOAD_TEXT = new PIXI.Text("", {font:"24px Arial", fill:0xFFFFFF});
+    // LOAD_TEXT.x = 10;
+    // LOAD_TEXT.y = 10;
     STAGE.addChild(LOAD_TEXT);
 
-    LOAD_TEXT.text = "Generating Terrain...";
-    RENDERER.render(STAGE);
+    // LOAD_TEXT.text = "Generating Terrain...";
+    // RENDERER.render(STAGE);
     game.start().then(function() {
         requirejs(["js/camera.js"], function(Camera) {
             STAGE.removeChild(LOAD_TEXT);
@@ -54,6 +55,7 @@ function startGame() {
             var background = new PIXI.Sprite(tex);
 
             STAGE.addChild(background);
+            STAGE.addChild(TILES_CONTAINER);
             STAGE.addChild(FIRST_LAYER);
             STAGE.addChild(SECOND_LAYER);
             STAGE.addChild(THIRD_LAYER);

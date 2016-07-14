@@ -1,5 +1,5 @@
-define(['js/terrain/tile.js', 'js/lib/perlin.js', 'js/lib/vector2.js', 'js/terrain/chunk.js'], 
-    function(Tile, noise_module, Vector2, Chunk) {
+define(['js/terrain/tile.js', 'js/lib/vector2.js', 'js/terrain/chunk.js'], 
+    function(Tile, Vector2, Chunk) {
 
     var TILE_POSITION = {
             left:       1,
@@ -19,7 +19,9 @@ define(['js/terrain/tile.js', 'js/lib/perlin.js', 'js/lib/vector2.js', 'js/terra
         this.tile_size = parseInt(tile_size, 10);
         this.chunk_size = parseInt(chunk_size, 10);
 
-        noise_module.seed(Math.random());
+        this.chunks = {};
+
+        this.seed = Math.random();
 
         var grass_spritesheet = PIXI.Texture.fromImage("resources/generated/white_rough.png");
 
@@ -64,145 +66,181 @@ define(['js/terrain/tile.js', 'js/lib/perlin.js', 'js/lib/vector2.js', 'js/terra
         var world = this;
         var promiseList = [];
 
-        var chunk_count = 1;
-        LOAD_TEXT.text = "Generating Chunk 1";
-        RENDERER.render(STAGE);
-
         for (var x = 0; x < world.width; x++) {
 
             for (var y = 0; y < world.height; y++) {
 
                 var prom = world.generateChunkAsync(x, y, world.chunk_size, world.chunk_size)
-                .then(function(result) {
-                    console.log(result);
-                    chunk_count++;
-
-                    if (chunk_count <= (world.width * world.height)) {
-                        LOAD_TEXT.text = "Generating Chunk " + chunk_count;
-                        RENDERER.render(STAGE);
-                    }
-                });
-
 
                 promiseList.push(prom);
             }
         }
-        return Promise.all(promiseList);
+        return Promise.all(promiseList).then(function(chunks) {
+            LOAD_TEXT.removeChildren();
+            var drawPromises = []
+            chunks.forEach(function(chunk) {
+                var prom = world.drawChunk(chunk);
+                drawPromises.push(prom);
+            });
+
+            return Promise.all(drawPromises);
+        });
     };
 
     StrataWorld.prototype.generateChunkAsync = function(x, y, width, height) {
-        var c = new Chunk(width, height);
+        var c = new Chunk(x, y, width, height);
         var world = this;
 
         return DATABASE.chunks.add(c).then(function(dbchunk) {
             var chunk = dbchunk[0];
-
+            var chunk_text = new PIXI.Text("Chunk " + chunk.chunk_id + " Loading", 
+                {font:"24px Arial", fill:0xFFFFFF});
+            chunk_text.x = 10;
+            chunk_text.y = 30 * chunk.chunk_id;
+            LOAD_TEXT.addChild(chunk_text);
+            RENDERER.render(STAGE);
+            
             return new Promise(function(resolve, reject) {
                 w = new Worker("js/generate_chunk_async.js");
 
                 w.postMessage(
                     {
-                        'x' : x, 
-                        'y': y, 
-                        'width': world.chunk_size, 
-                        'height': world.chunk_size, 
+                        'type' : 'init',
                         'chunk' : chunk,
+                        'tile_size': world.tile_size,
+                        'seed' : world.seed
                     }
                 );
 
                 w.onmessage = function(e) {
-                    var tiles = e.data;
-                    var promiseList = [];
+                    if (e.data.type == "finished") {
+                        chunk_text.text = "Chunk " + chunk.chunk_id + " Finished";
+                        chunk_text.tint = 0x00FF00;
+                        RENDERER.render(STAGE);
 
-                    for (var i = 0; i < chunk.width; i++) {
-                        for (var j = 0; j < chunk.height; j++) {
+                        resolve(chunk);   
 
-                            var tile = tiles[i][j];
-                            // Chunk.addTile(tile);
-                            var prom = new Promise(function(resolve, reject) {
-
-                                var sprite = Tile.initSprite(tile.position.x, tile.position.y, 
-                                    world.tile_size, world.tile_size, world.waterColor);
-                                var graphics = sprite.children[0];
-
-                                if (world.processTile(sprite, tiles, tile, 'grass', world.mountainsColor, .8, 1)) {
-                                    graphics.beginFill(world.highlandsColor);
-                                    graphics.drawRect(0, 0, TILE_SIZE, TILE_SIZE);  
-                                }
-                                else if (world.processTile(sprite, tiles, tile, 'grass', world.highlandsColor, .3, .8)) {
-                                    graphics.beginFill(world.grassColor);
-                                    graphics.drawRect(0, 0, TILE_SIZE, TILE_SIZE);
-                                }
-                                else if (world.processTile(sprite, tiles, tile, 'grass', world.grassColor, .2, .3)) {
-                                    graphics.beginFill(world.waterColor);
-                                    graphics.drawRect(0, 0, TILE_SIZE, TILE_SIZE);
-                                }
-
-                                TILES_CONTAINER.addChild(sprite);
-                                resolve(sprite);
-                            });
-
-                            promiseList.push(prom);
-                        }
+                    } else if (e.data.type == "progress") {
+                        chunk_text.text = "Chunk " + chunk.chunk_id + " " + e.data.info;
+                        RENDERER.render(STAGE);
                     }
-
-                    Promise.all(promiseList).then(function(db_tiles) {
-                        resolve(chunk);
-                    });
                     
                 } // end onmessage
+
+                w.onerror = function(e) {
+                    console.error(e);
+                }
 
             }); // end worker promise
 
         }); // end database add
     }
 
-    StrataWorld.prototype.generateChunk = function(x, y, width, height) {
-        var c = new Chunk(width, height);
-        var self = this;
+    StrataWorld.prototype.drawChunk = function(chunk) {
+        var world = this;
+        var chunk_text = new PIXI.Text("Chunk " + chunk.chunk_id + " Drawing", 
+            {font:"24px Arial", fill:0xFFFFFF});
+        chunk_text.x = 10;
+        chunk_text.y = 30 * chunk.chunk_id;
+        LOAD_TEXT.addChild(chunk_text);
+        RENDERER.render(STAGE);
 
-        return DATABASE.chunks.add(c).then(function(dbchunk) {
-            var chunk = dbchunk[0];
-
-            var offsetX = x * chunk.width;
-            var offsetY = y * chunk.height;
-
+        return Chunk.getTilesAs2DArray(chunk.chunk_id)
+        .then(function (tiles) {
+            var chunkContainer = new PIXI.Container();
             var promiseList = [];
 
             for (var i = 0; i < chunk.width; i++) {
-
                 for (var j = 0; j < chunk.height; j++) {
-                    var adjustedX = i + offsetX;
-                    var adjustedY = j + offsetY;
-                    var perlin_height = (noise_module.simplex2(adjustedX / 100, adjustedY / 100) + 1) / 2;
 
-                    var tile = {
-                        'chunk_id': chunk.chunk_id,
-                        'index': new Vector2(i, j),
-                        'position': new Vector2(adjustedX * self.tile_size, adjustedY * self.tile_size),
-                        'height': perlin_height
-                    };
-                    var prom = Chunk.addTile(tile).then(function(new_tile) {
-                        var sprite = Tile.initSprite(new_tile.position.x, new_tile.position.y, 
-                            self.tile_size, self.tile_size, self.waterColor);
+                    var tile = tiles[i][j];
 
-                        TILES_CONTAINER.addChild(sprite);
+                    var prom = new Promise(function(resolve, reject) {
 
-                        return new_tile;
+                        var sprite = Tile.initSprite(tile.position.x, tile.position.y, 
+                            world.tile_size, world.tile_size, world.waterColor);
+                        var graphics = sprite.children[0];
+
+                        if (world.processTile(sprite, tiles, tile, 'grass', world.mountainsColor, .8, 1)) {
+                            graphics.beginFill(world.highlandsColor);
+                            graphics.drawRect(0, 0, TILE_SIZE, TILE_SIZE);  
+                        }
+                        else if (world.processTile(sprite, tiles, tile, 'grass', world.highlandsColor, .3, .8)) {
+                            graphics.beginFill(world.grassColor);
+                            graphics.drawRect(0, 0, TILE_SIZE, TILE_SIZE);
+                        }
+                        else if (world.processTile(sprite, tiles, tile, 'grass', world.grassColor, .2, .3)) {
+                            graphics.beginFill(world.waterColor);
+                            graphics.drawRect(0, 0, TILE_SIZE, TILE_SIZE);
+                        }
+
+                        chunkContainer.addChild(sprite);
+                        resolve(sprite);
                     });
 
                     promiseList.push(prom);
                 }
             }
 
-            return Promise.all(promiseList);
+            Promise.all(promiseList).then(function(db_tiles) {
+                var offsetX = chunk.position.x * chunk.width * world.tile_size;
+                var offsetY = chunk.position.y * chunk.height * world.tile_size;
 
-        }).catch(function(e) {
-            console.log(e);
-            return null;
-        });  
-        
+                var tex = chunkContainer.generateTexture(RENDERER);
+                var chunkSprite = new PIXI.Sprite(tex);
+                chunkSprite.position = new PIXI.Point(offsetX, offsetY);
+
+                TILES_CONTAINER.addChild(chunkSprite);
+            });
+        });
     }
+
+    // StrataWorld.prototype.generateChunk = function(x, y, width, height) {
+    //     var c = new Chunk(width, height);
+    //     var self = this;
+
+    //     return DATABASE.chunks.add(c).then(function(dbchunk) {
+    //         var chunk = dbchunk[0];
+
+    //         var offsetX = x * chunk.width;
+    //         var offsetY = y * chunk.height;
+
+    //         var promiseList = [];
+
+    //         for (var i = 0; i < chunk.width; i++) {
+
+    //             for (var j = 0; j < chunk.height; j++) {
+    //                 var adjustedX = i + offsetX;
+    //                 var adjustedY = j + offsetY;
+    //                 var perlin_height = (noise_module.simplex2(adjustedX / 100, adjustedY / 100) + 1) / 2;
+
+    //                 var tile = {
+    //                     'chunk_id': chunk.chunk_id,
+    //                     'index': new Vector2(i, j),
+    //                     'position': new Vector2(adjustedX * self.tile_size, adjustedY * self.tile_size),
+    //                     'height': perlin_height
+    //                 };
+    //                 var prom = Chunk.addTile(tile).then(function(new_tile) {
+    //                     var sprite = Tile.initSprite(new_tile.position.x, new_tile.position.y, 
+    //                         self.tile_size, self.tile_size, self.waterColor);
+
+    //                     TILES_CONTAINER.addChild(sprite);
+
+    //                     return new_tile;
+    //                 });
+
+    //                 promiseList.push(prom);
+    //             }
+    //         }
+
+    //         return Promise.all(promiseList);
+
+    //     }).catch(function(e) {
+    //         console.log(e);
+    //         return null;
+    //     });  
+        
+    // }
 
     StrataWorld.prototype.processTile = function(container, tiles, tile, sprite_type, tint, minheight, maxheight) {
         var newSprite = null;
