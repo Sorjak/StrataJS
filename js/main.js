@@ -41,29 +41,26 @@ function startGame() {
     SECOND_LAYER = new PIXI.Container();
     THIRD_LAYER = new PIXI.Container();
 
-    // LOAD_TEXT = new PIXI.Text("", {font:"24px Arial", fill:0xFFFFFF});
-    // LOAD_TEXT.x = 10;
-    // LOAD_TEXT.y = 10;
     STAGE.addChild(LOAD_TEXT);
 
-    // LOAD_TEXT.text = "Generating Terrain...";
-    // RENDERER.render(STAGE);
-    game.start().then(function() {
-        requirejs(["js/camera.js"], function(Camera) {
-            STAGE.removeChild(LOAD_TEXT);
-            var tex = TILES_CONTAINER.generateTexture(RENDERER);
-            var background = new PIXI.Sprite(tex);
+    requirejs(["js/camera.js"], function(Camera) {
+        DATABASE.chunks.clear().then(function(e) {
+            game.start().then(function() {
+                STAGE.removeChild(LOAD_TEXT);
+                var tex = TILES_CONTAINER.generateTexture(RENDERER);
+                var background = new PIXI.Sprite(tex);
 
-            STAGE.addChild(background);
-            STAGE.addChild(TILES_CONTAINER);
-            STAGE.addChild(FIRST_LAYER);
-            STAGE.addChild(SECOND_LAYER);
-            STAGE.addChild(THIRD_LAYER);
-            STAGE.addChild(game.graphics);
+                STAGE.addChild(background);
+                STAGE.addChild(TILES_CONTAINER);
+                STAGE.addChild(FIRST_LAYER);
+                STAGE.addChild(SECOND_LAYER);
+                STAGE.addChild(THIRD_LAYER);
+                STAGE.addChild(game.graphics);
 
-            camera = new Camera(STAGE);
-            
-            mainLoop();
+                camera = new Camera(STAGE);
+                
+                mainLoop();    
+            });
         });
     });
 }
@@ -99,7 +96,6 @@ requirejs(["js/lib/pixi/bin/pixi.js", "js/lib/db.min.js"], function(pixi, dbjs) 
             function(StrataGame, Chunk) {
 
             // Load static assets and create a render texture
-
             var loader = PIXI.loader; 
             loader.add('white_square', "resources/generated/white_square.png");
             loader.add('white_rough', "resources/generated/white_rough.png");
@@ -115,7 +111,6 @@ requirejs(["js/lib/pixi/bin/pixi.js", "js/lib/db.min.js"], function(pixi, dbjs) 
             });
 
             loader.load();
-
 
         });
     });

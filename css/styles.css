@@ -1,8 +1,7 @@
 .container {
-    width: 100%;
+    width: 960px;
     display:block;
-    float:left;
-    margin-bottom: 20px;
+    margin: 0px auto 20px auto;
 }
 
 #console textarea {

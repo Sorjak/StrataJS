@@ -1,5 +1,5 @@
-define(['js/terrain/tile.js', 'js/lib/vector2.js', 'js/terrain/chunk.js'], 
-    function(Tile, Vector2, Chunk) {
+define(['js/terrain/tile.js', 'js/lib/vector2.js', 'js/terrain/chunk.js', 'js/utils.js'], 
+    function(Tile, Vector2, Chunk, Utils) {
 
     var TILE_POSITION = {
             left:       1,
@@ -21,7 +21,10 @@ define(['js/terrain/tile.js', 'js/lib/vector2.js', 'js/terrain/chunk.js'],
 
         this.chunks = {};
 
-        this.seed = Math.random();
+        this.seeds = {
+            'elevation' : Math.random(),
+            'fertility' : Math.random(),
+        };
 
         var grass_spritesheet = PIXI.Texture.fromImage("resources/generated/white_rough.png");
 
@@ -30,22 +33,22 @@ define(['js/terrain/tile.js', 'js/lib/vector2.js', 'js/terrain/chunk.js'],
         this.highlandsColor  = 0x68CC58;
         this.mountainsColor  = 0xFFCC58;
 
-        this.sprites = {};
+        // this.sprites = {};
 
-        this.sprites['grass'] = {
-            'center' : [],
-            'side'   : [],
-            'corner_inner' : [],
-            'corner_outer' : []
-        };
+        // this.sprites['grass'] = {
+        //     'center' : [],
+        //     'side'   : [],
+        //     'corner_inner' : [],
+        //     'corner_outer' : []
+        // };
 
-        for (var i = 0; i < (grass_spritesheet.width / this.tile_size); i++) {
+        // for (var i = 0; i < (grass_spritesheet.width / this.tile_size); i++) {
 
-            this.sprites['grass']['center'].push(this.createSprite(grass_spritesheet, i * 16, 0 * 16));
-            this.sprites['grass']['side'].push(this.createSprite(grass_spritesheet, i * 16, 1 * 16));
-            this.sprites['grass']['corner_inner'].push(this.createSprite(grass_spritesheet, i * 16, 2 * 16));
-            this.sprites['grass']['corner_outer'].push(this.createSprite(grass_spritesheet, i * 16, 3 * 16));
-        }
+        //     this.sprites['grass']['center'].push(this.createSprite(grass_spritesheet, i * 16, 0 * 16));
+        //     this.sprites['grass']['side'].push(this.createSprite(grass_spritesheet, i * 16, 1 * 16));
+        //     this.sprites['grass']['corner_inner'].push(this.createSprite(grass_spritesheet, i * 16, 2 * 16));
+        //     this.sprites['grass']['corner_outer'].push(this.createSprite(grass_spritesheet, i * 16, 3 * 16));
+        // }
 
     };
 
@@ -62,7 +65,7 @@ define(['js/terrain/tile.js', 'js/lib/vector2.js', 'js/terrain/chunk.js'],
         return output;
     }
 
-    StrataWorld.prototype.generateTiles = function() {
+    StrataWorld.prototype.generateWorld = function() {
         var world = this;
         var promiseList = [];
 
@@ -75,11 +78,12 @@ define(['js/terrain/tile.js', 'js/lib/vector2.js', 'js/terrain/chunk.js'],
                 promiseList.push(prom);
             }
         }
+
         return Promise.all(promiseList).then(function(chunks) {
             LOAD_TEXT.removeChildren();
             var drawPromises = []
-            chunks.forEach(function(chunk) {
-                var prom = world.drawChunk(chunk);
+            chunks.forEach(function(data) {
+                var prom = world.drawChunk(data.chunk, data.tiles);
                 drawPromises.push(prom);
             });
 
@@ -108,7 +112,7 @@ define(['js/terrain/tile.js', 'js/lib/vector2.js', 'js/terrain/chunk.js'],
                         'type' : 'init',
                         'chunk' : chunk,
                         'tile_size': world.tile_size,
-                        'seed' : world.seed
+                        'seeds' : world.seeds
                     }
                 );
 
@@ -118,7 +122,7 @@ define(['js/terrain/tile.js', 'js/lib/vector2.js', 'js/terrain/chunk.js'],
                         chunk_text.tint = 0x00FF00;
                         RENDERER.render(STAGE);
 
-                        resolve(chunk);   
+                        resolve({'chunk' : chunk, 'tiles' : e.data.output });   
 
                     } else if (e.data.type == "progress") {
                         chunk_text.text = "Chunk " + chunk.chunk_id + " " + e.data.info;
@@ -136,7 +140,7 @@ define(['js/terrain/tile.js', 'js/lib/vector2.js', 'js/terrain/chunk.js'],
         }); // end database add
     }
 
-    StrataWorld.prototype.drawChunk = function(chunk) {
+    StrataWorld.prototype.drawChunk = function(chunk, tiles) {
         var world = this;
         var chunk_text = new PIXI.Text("Chunk " + chunk.chunk_id + " Drawing", 
             {font:"24px Arial", fill:0xFFFFFF});
@@ -145,8 +149,8 @@ define(['js/terrain/tile.js', 'js/lib/vector2.js', 'js/terrain/chunk.js'],
         LOAD_TEXT.addChild(chunk_text);
         RENDERER.render(STAGE);
 
-        return Chunk.getTilesAs2DArray(chunk.chunk_id)
-        .then(function (tiles) {
+        // return Chunk.getTilesAs2DArray(chunk.chunk_id)
+        // .then(function (tiles) {
             var chunkContainer = new PIXI.Container();
             var promiseList = [];
 
@@ -161,18 +165,23 @@ define(['js/terrain/tile.js', 'js/lib/vector2.js', 'js/terrain/chunk.js'],
                             world.tile_size, world.tile_size, world.waterColor);
                         var graphics = sprite.children[0];
 
-                        if (world.processTile(sprite, tiles, tile, 'grass', world.mountainsColor, .8, 1)) {
-                            graphics.beginFill(world.highlandsColor);
-                            graphics.drawRect(0, 0, TILE_SIZE, TILE_SIZE);  
-                        }
-                        else if (world.processTile(sprite, tiles, tile, 'grass', world.highlandsColor, .3, .8)) {
-                            graphics.beginFill(world.grassColor);
-                            graphics.drawRect(0, 0, TILE_SIZE, TILE_SIZE);
-                        }
-                        else if (world.processTile(sprite, tiles, tile, 'grass', world.grassColor, .2, .3)) {
-                            graphics.beginFill(world.waterColor);
-                            graphics.drawRect(0, 0, TILE_SIZE, TILE_SIZE);
-                        }
+                        // if (world.processTile(sprite, tiles, tile, 'grass', world.mountainsColor, .8, 1)) {
+                        //     graphics.beginFill(world.highlandsColor);
+                        //     graphics.drawRect(0, 0, TILE_SIZE, TILE_SIZE);  
+                        // }
+                        // else if (world.processTile(sprite, tiles, tile, 'grass', world.highlandsColor, .3, .8)) {
+                        //     graphics.beginFill(world.grassColor);
+                        //     graphics.drawRect(0, 0, TILE_SIZE, TILE_SIZE);
+                        // }
+                        // else if (world.processTile(sprite, tiles, tile, 'grass', world.grassColor, .2, .3)) {
+                        //     graphics.beginFill(world.waterColor);
+                        //     graphics.drawRect(0, 0, TILE_SIZE, TILE_SIZE);
+                        // }
+
+                        var color = world.mapHeightToColor(tile.height, 10000);
+
+                        graphics.beginFill(color);
+                        graphics.drawRect(0, 0, world.tile_size, world.tile_size);
 
                         chunkContainer.addChild(sprite);
                         resolve(sprite);
@@ -182,7 +191,7 @@ define(['js/terrain/tile.js', 'js/lib/vector2.js', 'js/terrain/chunk.js'],
                 }
             }
 
-            Promise.all(promiseList).then(function(db_tiles) {
+            return Promise.all(promiseList).then(function(sprites) {
                 var offsetX = chunk.position.x * chunk.width * world.tile_size;
                 var offsetY = chunk.position.y * chunk.height * world.tile_size;
 
@@ -192,55 +201,9 @@ define(['js/terrain/tile.js', 'js/lib/vector2.js', 'js/terrain/chunk.js'],
 
                 TILES_CONTAINER.addChild(chunkSprite);
             });
-        });
+        // });
     }
 
-    // StrataWorld.prototype.generateChunk = function(x, y, width, height) {
-    //     var c = new Chunk(width, height);
-    //     var self = this;
-
-    //     return DATABASE.chunks.add(c).then(function(dbchunk) {
-    //         var chunk = dbchunk[0];
-
-    //         var offsetX = x * chunk.width;
-    //         var offsetY = y * chunk.height;
-
-    //         var promiseList = [];
-
-    //         for (var i = 0; i < chunk.width; i++) {
-
-    //             for (var j = 0; j < chunk.height; j++) {
-    //                 var adjustedX = i + offsetX;
-    //                 var adjustedY = j + offsetY;
-    //                 var perlin_height = (noise_module.simplex2(adjustedX / 100, adjustedY / 100) + 1) / 2;
-
-    //                 var tile = {
-    //                     'chunk_id': chunk.chunk_id,
-    //                     'index': new Vector2(i, j),
-    //                     'position': new Vector2(adjustedX * self.tile_size, adjustedY * self.tile_size),
-    //                     'height': perlin_height
-    //                 };
-    //                 var prom = Chunk.addTile(tile).then(function(new_tile) {
-    //                     var sprite = Tile.initSprite(new_tile.position.x, new_tile.position.y, 
-    //                         self.tile_size, self.tile_size, self.waterColor);
-
-    //                     TILES_CONTAINER.addChild(sprite);
-
-    //                     return new_tile;
-    //                 });
-
-    //                 promiseList.push(prom);
-    //             }
-    //         }
-
-    //         return Promise.all(promiseList);
-
-    //     }).catch(function(e) {
-    //         console.log(e);
-    //         return null;
-    //     });  
-        
-    // }
 
     StrataWorld.prototype.processTile = function(container, tiles, tile, sprite_type, tint, minheight, maxheight) {
         var newSprite = null;
@@ -384,6 +347,87 @@ define(['js/terrain/tile.js', 'js/lib/vector2.js', 'js/terrain/chunk.js'],
         output.rotation = rotation * (Math.PI / 180);
 
         return output;
+    }
+
+    StrataWorld.prototype.mapHeightToColor = function(height, resolution) {
+        var world = this;
+        // var clean_height = 1 - (Math.floor(height * resolution) / resolution);
+        var clean_height = Math.floor(height * resolution) / resolution;
+
+        var output = 0;
+        var step = .20;
+
+        var blue    = world.getBlue(clean_height);
+        var green   = world.getGreen(clean_height) * Math.pow(16, 2); //world.getScaledColor(clean_height, 1) * Math.pow(16, 2);
+        var red     = world.getRed(clean_height) * Math.pow(16, 4);
+
+        output =  red + green + blue;
+
+        return output;
+
+        // if (clean_height <= step) {
+        //     var ratio = clean_height / step;
+        //     var blue = (1 - Math.floor(ratio * 255));
+        //     output = blue;
+
+        // } else if (clean_height > step && clean_height <= (step * 2)) {
+        //     var ratio = (clean_height - step) / step;
+        //     var green = Math.floor(ratio * 255) * (Math.pow(16, 2));
+        //     var blue = Math.floor(ratio * 255);
+        //     output =  green + blue;
+
+        // } else if (clean_height > (step * 2) && clean_height <= (step * 3)) {
+        //     var ratio = (clean_height - (step * 2)) / step;
+        //     var green = Math.floor(ratio * 255) * (Math.pow(16, 2));
+        //     output = green;
+
+        // } else if (clean_height > (step * 3) && clean_height <= (step * 4)) {
+        //     var ratio = (clean_height - (step * 3)) / step;
+        //     var red = Math.floor(ratio * 255) * (Math.pow(16, 4));
+        //     var green = Math.floor(ratio * 255) * (Math.pow(16, 2));
+        //     output = red + green;
+
+        // } else {
+        //     var ratio = (clean_height - (step * 4)) / step;
+        //     var red = Math.floor(ratio * 255) * (Math.pow(16, 4));
+        //     output = red;
+        // }
+
+        // return output;
+
+    }
+
+    StrataWorld.prototype.getBlue = function(val) {
+        var time = Math.min(val, .3) / .3;
+        var bezierValue = Utils.cubicBezier(
+            new Vector2(0, 1),
+            new Vector2(.58, 1),
+            new Vector2(.42, 0),
+            new Vector2(1, 0), 
+            time).y;
+        return Math.floor(bezierValue * 255);
+    }
+
+    StrataWorld.prototype.getRed = function(val) {
+        var time = (Math.max(val, .7) - .7) / .3;
+        var bezierValue = Utils.cubicBezier(
+            new Vector2(0, 0),
+            new Vector2(.42, 0),
+            new Vector2(.58, 1),
+            new Vector2(1, 1), 
+            time).y;
+        return Math.floor(bezierValue * 255);
+    }
+
+    StrataWorld.prototype.getGreen = function(val) {
+
+        var bezierValue = Utils.cubicBezier(
+            new Vector2(0, 0),
+            new Vector2(.3, 1),
+            new Vector2(.7, 1),
+            new Vector2(1, 0), 
+            val).y;
+        return Math.floor(bezierValue * 255);
     }
 
     // PUBLIC 

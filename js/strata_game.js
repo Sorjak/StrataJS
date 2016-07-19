@@ -44,7 +44,7 @@ define(["js/terrain/strata_world.js", "js/entities/bunny.js", "js/entities/wolf.
         this.world = new StrataWorld( w_width, w_height, tile_size, chunk_size );
         this.astar = new Astar(this.world);
 
-        return this.world.generateTiles();
+        return this.world.generateWorld();
     }
 
     StrataGame.prototype.update = function() {

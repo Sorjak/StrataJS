@@ -22,41 +22,53 @@ onmessage = function(e) {
         requirejs(['terrain/chunk.js', 'terrain/tile.js', 'lib/vector2.js', 'lib/perlin.js', 'lib/db.min.js'],
             function(Chunk, Tile, Vector2, noise_module, dbjs) {
 
-            function GenerateChunk(chunk, tile_size, seed, db) {
+            function GenerateChunk(chunk, tile_size, seeds, db) {
                 // We use the same seed across all Workers, so the smooth noise still works
-                noise_module.seed(seed);
+                noise_module.seed(seeds.elevation);
                 var promiseList = [];
 
                 postMessage({'type': 'progress', 'info' : "Begin Noise Creation"});
 
                 for (var i = 0; i < chunk.width; i++) {
                     for (var j = 0; j < chunk.height; j++) {
-                        
+
                         // Here we adjust the x and y values of the tile to map onto the simplex noise
                         var adjustedX = i + (chunk.position.x * chunk.width);
                         var adjustedY = j + (chunk.position.y * chunk.height);
 
                         // Find adjusted noise value, and remap that to 0, 1
-                        var perlin_height = (noise_module.simplex2(adjustedX / 100, adjustedY / 100) + 1) / 2;
+                        var perlin_height = (noise_module.simplex2(adjustedX / 60, adjustedY / 60) + 1) / 2;
 
                         var tile = new Tile(chunk.chunk_id, i, j, tile_size, perlin_height);
 
                         // Here we add the tile to the database for later querying. 
                         // Also, we send a status update back to the main thread.
-                        var prom = db.tiles.add(tile).then(function(db_tile) {
-                            mytile = db_tile[0];
-                            var tile_num = mytile.index.x * chunk.height + mytile.index.y;
+                        // var prom = db.tiles.add(tile).then(function(db_tile) {
+                            // mytile = db_tile[0];
+                        var prom = new Promise(function(resolve, reject) {
+                            var tile_num = tile.index.x * chunk.height + tile.index.y;
                             var percentage = Math.floor((tile_num / (chunk.width * chunk.height)) * 100);
                             postMessage({'type': 'progress', 'info' : "Creating tiles: " + percentage + "%"});
+                            resolve(tile);
                         });
                         promiseList.push(prom);
                     }
                 }
 
                 // Once all the tiles are in the DB, we tell the main thread that we are done.
-                Promise.all(promiseList).then(function(e) {
+                Promise.all(promiseList).then(function(unsorted_tiles) {
                     console.log("worker " + chunk.chunk_id + " finished creating tiles");
-                    postMessage({'type': 'finished'});
+                    var tiles = [];
+                    unsorted_tiles.forEach(function(tile) {
+                        if (tiles[tile.index.x] == undefined){
+                            tiles[tile.index.x] = [];
+                        }
+
+                        tiles[tile.index.x][tile.index.y] = tile;
+                        
+                    });
+
+                    postMessage({'type': 'finished', 'output' : tiles});
                 });
             }
 
@@ -64,7 +76,7 @@ onmessage = function(e) {
                 server: 'strata-db',
                 version: 1,
             }).then(function(database) {
-                GenerateChunk(data.chunk, data.tile_size, data.seed, database);
+                GenerateChunk(data.chunk, data.tile_size, data.seeds, database);
             });
 
         });
