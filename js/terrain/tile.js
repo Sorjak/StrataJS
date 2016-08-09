@@ -2,7 +2,7 @@
 define(function() {
     // "use strict";
     
-    function Tile(chunk_id, x, y, size, height, type) {
+    function Tile(chunk_id, x, y, size, height) {
         this.chunk_id = chunk_id;
         this.position = new Vector2(x * size, y * size);
 
@@ -10,10 +10,12 @@ define(function() {
         this.size = size;
 
         this.height = height;
-        // this.weight = Math.floor((this.height * 100) / 25);        
+        // this.weight = Math.floor((this.height * 100) / 25);
+        this.neighbors = new Set();   
         this.occupants = new Set();
         this.tags = new Set();
 
+        this.terrain_type = "water";
     };
 
     Tile.initSprite = function(x, y, width, height, defaultColor) {
